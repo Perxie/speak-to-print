@@ -1,6 +1,8 @@
 # speak-to-print — Plan
 
 > **Durum:** Kullanıcı bu planı 15 Kasım 2026'da onayladı. Metindeki "onaylanana kadar kod yazılmaz" ifadesi artık geçerli değil. İlerleme için `PROGRESS.md`'ye bakın.
+>
+> **Denemelerle değişenler** (güncel hâli `CLAUDE.md`'de): Faz 0.2'de cuDNN'in gerekmediği görüldü (yalnızca `nvidia-cublas-cu12`), PyAV 19'dan küçük sürüme sabitlendi.
 
 ## İnceleme sonucu (ikinci model, 15 Kasım 2026)
 

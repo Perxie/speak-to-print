@@ -3,17 +3,17 @@
 <!-- Bu dosya kısa kalır: "Şu an" bölümünün üstüne yazılır, biten maddeler birikince tek satırlık özete indirilir. -->
 
 ## Şu an
-- Son yapılan: Faz 0.1 tamamlandı, kullanıcı onayladı: uv projesi (Python 3.14, uv'nin kendi kopyası), `.venv`, PyCharm yorumlayıcısı, git (`main`). İlk commit yapıldı ve GitHub'daki gizli `Perxie/speak-to-print` reposuna yüklendi.
+- Son yapılan: Faz 0.2 tamamlandı, kullanıcı kendi denemesiyle onayladı; commit edilip GitHub'a gönderildi. `spikes/gpu_check.py`: large-v3 float16, yükleme ~1,5 sn, ~3,8 GB ekran kartı belleği, 11 sn ses 0,34 sn'de (gerçek zamanın ~33 katı). `LD_LIBRARY_PATH`'siz, boş ortamda ve `HF_HUB_OFFLINE=1` ile de çalıştı. PyAV 18'e sabitlendi.
 - Yarım kalan: Yok.
-- Sıradaki: Faz 0.2 — faster-whisper ile large-v3'ü GPU'da çalıştırma denemesi. Başlamadan önce kullanıcının onayı beklenir.
+- Sıradaki: Faz 0.3 — mikrofon denemesi (QtMultimedia ile kayıt; BTD 700 "+ Mono Input" profili gerekiyor). Başlamadan önce kullanıcının onayı beklenir.
 
 ## Yapılacaklar
 
 ### Faz 0 — Kurulum ve riskli parçaların denemeleri
 - [x] 0.1 Kurulum: `uv run speak-to-print` çalışıyor, PyCharm `.venv`'i kullanıyor.
-- [ ] 0.2 GPU: large-v3 ekran kartında örnek bir kaydı gerçek zamandan çok hızlı çeviriyor.
+- [x] 0.2 GPU: large-v3 ekran kartında örnek bir kaydı gerçek zamandan çok hızlı çeviriyor.
 - [ ] 0.3 Mikrofon: sistem varsayılanından temiz kayıt alınıyor, ilk kelime kesilmiyor.
-- [ ] 0.4 Model karşılaştırması: kullanıcının kayıtlarıyla tablo çıktı, model seçildi (karışık dil ya da yalnızca Türkçe).
+- [ ] 0.4 Model karşılaştırması: kullanıcının kayıtlarıyla tablo çıktı, model seçildi (karışık dil ya da yalnızca Türkçe). Not: 45–60 sn'lik gerçek bir kayıt da olsun ve segmentlerin `temperature` değerleri kaydedilsin (Faz 0.2'de tekrarlı örnek kayıtta yeniden denemeler yavaşlattı); her model ~3,9 GB, tek tek yüklensin.
 - [ ] 0.5 Kısayol: portal kısayolu Kickoff'tan açılışta da, yeniden açılıştan sonra da çalışıyor.
 - [ ] 0.6 Yazma: Türkçe test cümlesi Kate, Firefox, Konsole, PyCharm'da birebir çıkıyor; yöntem seçildi.
 - [ ] 0.7 Dinleme penceresi: Bitir'e tıklayınca metin Kate'e gidiyor, pencere odağı çalmıyor.

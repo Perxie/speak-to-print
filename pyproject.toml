@@ -3,7 +3,13 @@ name = "speak-to-print"
 version = "0.1.0"
 description = "KDE Plasma (Wayland) için tamamen yerel çalışan Türkçe dikte uygulaması"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    # PyAV 19, faster-whisper 1.2.1'in kullandığı `metadata_errors` parametresini kaldırdı.
+    # faster-whisper'ın geliştirme kodunda düzeltildi; yeni sürümü çıkınca bu sınır kalkabilir.
+    "av>=18,<19",
+    "faster-whisper>=1.2.1",
+    "nvidia-cublas-cu12>=12,<13",
+]
 
 [project.scripts]
 speak-to-print = "speak_to_print:main"

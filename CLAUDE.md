@@ -6,10 +6,12 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `uv sync`: `.venv`'i `pyproject.toml` ve `uv.lock`'a göre kurar ya da günceller.
 - `uv run speak-to-print`: uygulamayı çalıştırır.
 - `uv add <paket>`: bağımlılık ekler. `pip install` kullanma.
+- `uv run python spikes/gpu_check.py [--model large-v3-turbo]`: modeli GPU'da dener, hızı ve bellek kullanımını ölçer.
 
 ## Nerede ne var
 - `docs/plan.md`: onaylanmış plan. Kararların gerekçeleri, fazlar ve her denemenin geçme ölçütü burada.
-- `src/speak_to_print/`: uygulama kodu. `spikes/`: Faz 0 deneme betikleri (uygulamaya dahil değil).
+- `src/speak_to_print/`: uygulama kodu. `spikes/`: Faz 0 deneme betikleri (uygulamaya dahil değil); `spikes/data/` git dışı.
+- `src/speak_to_print/cuda_libs.py`: `preload_cuda_libraries()`, pip'ten gelen cuBLAS'ı `LD_LIBRARY_PATH` olmadan yükler. GPU'da model oluşturmadan önce çağrılmalı.
 
 ## Önemli kararlar (ayrıntı: `docs/plan.md`)
 - Python 3.14, uv'nin kendi kopyası (`[tool.uv] python-preference = "only-managed"`). Sistem Python'u kullanılmaz; pacman güncellemesi `.venv`'i bozmasın.
@@ -19,6 +21,8 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Uygulama servis değildir: otomatik başlama yok, pencere kapanınca tamamen kapanır.
 
 ## Dikkat
+- ctranslate2 4.9.0 cuBLAS'ı CUDA 12 olarak (`libcublas.so.12`) çalışma anında açıyor; cuDNN gerekmiyor. Bu yüzden bağımlılık `nvidia-cublas-cu12`.
+- `av` 19'dan küçük sürüme sabit: faster-whisper 1.2.1'in ses okuma kodu PyAV 19'da kaldırılan `metadata_errors` parametresini kullanıyor. faster-whisper yeni sürüm çıkarınca sınır kalkabilir.
 - Wayland'de X11 araçları (`xdotool`) çalışmaz; `wtype` KWin'de çalışmaz; `ydotool` Türkçe Q'da yanlış harf yazar.
 - Kullanıcı Türkçe Q, Türkçe F ve bir İngilizce düzen kullanabilir. Tuş koduna dayalı her şey düzenden bağımsız olmalı (Türkçe F'de ABD'deki V tuşu `c` yazar).
 - Kickoff'tan açılan program terminaldeki ortam değişkenlerini görmez.

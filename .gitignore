@@ -15,6 +15,7 @@ dist/
 # Not: uygulamanın kendi ses dosyaları (Faz 4) eklenirse buraya bir !istisna satırı gerekir.
 /models/
 /recordings/
+/spikes/data/
 *.wav
 *.flac
 *.mp3
