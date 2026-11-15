@@ -1,0 +1,18 @@
+[project]
+name = "speak-to-print"
+version = "0.1.0"
+description = "KDE Plasma (Wayland) için tamamen yerel çalışan Türkçe dikte uygulaması"
+requires-python = ">=3.14"
+dependencies = []
+
+[project.scripts]
+speak-to-print = "speak_to_print:main"
+
+[tool.uv]
+# Sistem Python'u yerine uv'nin kendi kopyasını kullan: pacman sistem Python'unu
+# yükselttiğinde .venv bozulmasın.
+python-preference = "only-managed"
+
+[build-system]
+requires = ["uv_build>=0.13.8,<0.14.0"]
+build-backend = "uv_build"

@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
+# PyCharm: makineye özel ayarlar (yorumlayıcı yolu vb.)
+.idea/
+
+# Modeller ve ses kayıtları: büyük ve/veya kişisel, git'e girmez.
+# Klasörler yalnızca proje kökünde yok sayılır (src/ altındaki aynı adlı paketler etkilenmez).
+# Not: uygulamanın kendi ses dosyaları (Faz 4) eklenirse buraya bir !istisna satırı gerekir.
+/models/
+/recordings/
+*.wav
+*.flac
+*.mp3
+*.ogg
+*.safetensors
+*.bin
