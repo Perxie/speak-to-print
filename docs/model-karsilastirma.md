@@ -4,7 +4,7 @@ Kullanıcının kendi sesiyle, USB mikrofonla (USB PnP Audio Device) yapılan 24
 İngilizce terimler içeren 20 Türkçe cümle (172 sn, 31 farklı terim), tamamı İngilizce bir cümle,
 2 dakika 39 saniyelik serbest konuşma, uzaktan kısık konuşma ve sessizlik.
 Kayıtlar ve cümle cümle rapor `recordings/set/` altında durur, git'e girmez.
-Yeniden üretmek için: `uv run python spikes/model_compare.py`.
+Ölçümü yapan betik (`spikes/model_compare.py`) sonradan silindi; git geçmişinde duruyor (`git checkout a21d4f1 -- spikes`).
 
 ## Karar
 

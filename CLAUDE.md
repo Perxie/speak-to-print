@@ -8,18 +8,12 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `uv add <paket>`: bağımlılık ekler. `pip install` kullanma.
 - `uv run speak-to-print --uninstall`: Kickoff kaydını ve KWin pencere kurallarını kaldırır (ayarlar, geçmiş, günlük ve model kalır).
 - `uv run pytest`: birim testleri (durum makinesi, uydurma metin önlemi); ekran, mikrofon ve model gerektirmez.
-- `uv run python spikes/gpu_check.py [--model large-v3-turbo]`: modeli GPU'da dener, hızı ve bellek kullanımını ölçer.
-- `uv run python spikes/mic_check.py [--list] [--device "USB PnP"] [--seconds 10]`: mikrofondan kayıt alır, seviyeyi ölçer, Türkçe yazıya çevirir.
-- `uv run python spikes/record_set.py [--device "USB PnP"] [--redo 5] [--status]`: `spikes/sentences_tr.txt` cümlelerini `recordings/set/` altına kaydeder.
-- `uv run python spikes/model_compare.py [--models large-v3 ...]`: kayıtları aday modellerle çevirir, `recordings/set/report.md` raporunu yazar.
-- `uv run python spikes/hotkey_check.py [--install-desktop | --uninstall-desktop] [--no-model]`: portal kısayolunu ve Kickoff'tan açılışı deneyen pencere; günlüğü `spikes/data/hotkey_check.log`.
-- `uv run python spikes/type_check.py`: test cümlesini seçilen yöntemle etkin pencereye yazar (etkileşimli); günlüğü `spikes/data/type_check.log`.
-- `uv run python spikes/popup_check.py [--probe | --install-rule | --remove-rule]`: dinleme penceresinin odağı çalıp çalmadığını dener; günlüğü `spikes/data/popup_check.log`.
 
 ## Nerede ne var
+- `README.md`: yeni bir bilgisayara kurulum, güncelleme ve kaldırma adımları (kullanıcı için). Kurulum adımları değişirse burayı da güncelle.
 - `docs/model-karsilastirma.md`: Faz 0.4 sonuçları, model kararı ve açık konular (ipucu metni, sözlük, uydurma metin).
 - `docs/plan.md`: onaylanmış plan. Kararların gerekçeleri, fazlar ve her denemenin geçme ölçütü burada.
-- `src/speak_to_print/`: uygulama kodu. `spikes/`: Faz 0 deneme betikleri (uygulamaya dahil değil); `spikes/data/` git dışı.
+- `src/speak_to_print/`: uygulama kodu. `tests/`: birim testleri. Faz 0'ın deneme betikleri (`spikes/`: GPU, mikrofon, model karşılaştırma, kısayol, yazma, pencere odağı) kullanıcının isteğiyle silindi; gerekirse git geçmişinden geri gelir: `git checkout a21d4f1 -- spikes`.
 - `src/speak_to_print/app.py`: giriş noktası; parçaları oluşturup bağlar, tek kopya denetimi yapar, açılışta Kickoff kaydını ve KWin kuralını günceller.
 - `src/speak_to_print/controller.py`: durum makinesi (`State`, `Outcome`); bağımlılıkları dışarıdan alır, `tests/test_controller.py` sahte nesnelerle sınar. Yeni davranış eklerken önce buraya ve teste bak.
 - `src/speak_to_print/audio.py` (`Recorder`), `transcriber.py` (`Transcriber`, ayrı QThread), `textguard.py` (uydurma metin kalıpları), `settings.py` (QSettings), `sounds.py` (başlama/bitiş sesleri; dosyalar `/run/user/<kimlik>/speak-to-print` altında üretilir, `pw-play` ile çalınır), `history.py` (`History`: SQLite geçmişi, `~/.local/share/speak-to-print/history.db`), `config.py` (sabitler; `POPUP_TITLE`/`POPUP_SIZE` KWin kuralıyla eşleşmek zorunda).

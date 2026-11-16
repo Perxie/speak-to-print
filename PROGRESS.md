@@ -4,7 +4,7 @@
 
 ## Şu an
 - Son yapılan: Faz 4 tamamlandı, kullanıcı deneyip onayladı; commit edilip GitHub'a gönderildi. Onaylanan planın bütün fazları (0–4) bitti: uygulama Kickoff'tan açılıyor, kısayolla ya da düğmeyle dinliyor, metni imlece yazıyor, düzenleme penceresi, geçmiş, ayarlar, sesler ve hata durumları çalışıyor.
-- Yarım kalan: Yok.
+- Yarım kalan: Yok. (Sonradan: `spikes/` kullanıcının isteğiyle silindi; yeni bilgisayara kurulum adımları `README.md`'ye yazıldı ve temiz bir kopyada denendi.)
 - Sıradaki: Planlı iş yok. Kullanıcı isterse aşağıdaki fikirlerden biri ya da günlük kullanımda çıkan sorunlar.
 
 ## Yapılacaklar
@@ -20,4 +20,3 @@
 - Tamamı İngilizce dikte için bir "İngilizce kipi" (şu an `language="tr"` ile İngilizce cümle Türkçeye çevriliyor).
 - Geçmişteki bir kaydı doğrudan başka uygulamaya yapıştırma (şu an Kopyala + Ctrl+V gerekiyor).
 - pip'ten gelen Qt, KDE'nin Breeze temasını almıyor; ana pencere ve ayarlar açık renkli görünüyor.
-- `spikes/` altındaki Faz 0 deneme betikleri artık gerekli değil; istenirse silinebilir.

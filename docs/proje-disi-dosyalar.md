@@ -46,5 +46,4 @@ Kickoff kaydını ve KWin kurallarını tek komutla kaldırmak için: `uv run sp
 
 ## Proje klasörünün içinde olup git'e girmeyenler
 
-Bunlar proje klasörü silinince gider: `.venv/` (yaklaşık 2 GB), `recordings/` (ses kayıtları ve rapor),
-`spikes/data/` (deneme kayıtları).
+Bunlar proje klasörü silinince gider: `.venv/` (yaklaşık 2 GB), `recordings/` (model karşılaştırması için yaptığınız ses kayıtları ve rapor).
