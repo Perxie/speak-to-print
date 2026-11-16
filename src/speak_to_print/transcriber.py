@@ -9,7 +9,6 @@ sonucu SwingUtilities.invokeLater ile arayüze taşımak.
 
 from __future__ import annotations
 
-import os
 import time
 from dataclasses import dataclass
 
@@ -34,30 +33,48 @@ class _Worker(QObject):
     load_failed = Signal(str)
     done = Signal(object)  # Transcript
     failed = Signal(str)
+    status = Signal(str)  # yükleme sırasındaki ara bilgiler
 
     def __init__(self) -> None:
         super().__init__()
         self._model = None
+        self.gpu_error = ""  # ekran kartı kullanılamadıysa nedeni
+
+    def _model_path(self) -> str:
+        """Modelin diskteki yolu. Bilgisayarda yoksa bir kez indirir; indiremezse anlaşılır bir hata verir."""
+        from faster_whisper import download_model
+
+        try:
+            # local_files_only: ağa hiç çıkmadan yalnızca önbelleğe bakar.
+            return download_model(MODEL_NAME, local_files_only=True)
+        except Exception:  # noqa: BLE001 — model önbellekte yok
+            self.status.emit("Model ilk kez indiriliyor (yaklaşık 3 GB); bu birkaç dakika sürebilir…")
+            try:
+                return download_model(MODEL_NAME)
+            except Exception as error:  # noqa: BLE001
+                raise RuntimeError("Konuşma tanıma modeli bu bilgisayarda yok ve indirilemedi. İnternet "
+                                   "bağlantınızı kontrol edip uygulamayı yeniden açın.") from error
 
     @Slot()
     def load(self) -> None:
         try:
             start = time.perf_counter()
             preload_cuda_libraries()
-            # Model önbellekteyse ağa hiç çıkma; kütüphane bu değişkeni içe aktarılırken okur.
-            os.environ.setdefault("HF_HUB_OFFLINE", "1")
             from faster_whisper import WhisperModel
 
+            path = self._model_path()
             try:
-                self._model = WhisperModel(MODEL_NAME, device="cuda", compute_type=COMPUTE_TYPE, local_files_only=True)
-            except Exception as offline_error:  # noqa: BLE001 — model önbellekte yoksa indirmeyi dene
-                if "cuda" in str(offline_error).lower() or "cublas" in str(offline_error).lower():
-                    raise
-                os.environ["HF_HUB_OFFLINE"] = "0"
-                self._model = WhisperModel(MODEL_NAME, device="cuda", compute_type=COMPUTE_TYPE)
-            self.ready.emit(time.perf_counter() - start, "cuda")
+                self._model = WhisperModel(path, device="cuda", compute_type=COMPUTE_TYPE)
+                device = "cuda"
+            except Exception as gpu_error:  # noqa: BLE001 — ekran kartı yok ya da kullanılamıyor
+                self.status.emit("Ekran kartı kullanılamadı; model işlemciye yükleniyor…")
+                self.gpu_error = f"{type(gpu_error).__name__}: {gpu_error}"
+                # İşlemcide 8 bitlik hesap: daha yavaş ama ekran kartı olmadan da çalışır.
+                self._model = WhisperModel(path, device="cpu", compute_type="int8")
+                device = "cpu"
+            self.ready.emit(time.perf_counter() - start, device)
         except Exception as error:  # noqa: BLE001 — hatayı arayüze taşıyoruz
-            self.load_failed.emit(f"{type(error).__name__}: {error}")
+            self.load_failed.emit(str(error) if isinstance(error, RuntimeError) else f"{type(error).__name__}: {error}")
 
     @Slot(object, bool, list)
     def transcribe(self, samples: np.ndarray, use_prompt: bool, vocabulary: list) -> None:
@@ -88,6 +105,7 @@ class Transcriber(QObject):
     load_failed = Signal(str)
     done = Signal(object)  # Transcript
     failed = Signal(str)
+    status = Signal(str)
 
     _load_requested = Signal()
     _transcribe_requested = Signal(object, bool, list)
@@ -105,7 +123,12 @@ class Transcriber(QObject):
         self._worker.load_failed.connect(self.load_failed)
         self._worker.done.connect(self.done)
         self._worker.failed.connect(self.failed)
+        self._worker.status.connect(self.status)
         self._thread.start()
+
+    @property
+    def gpu_error(self) -> str:
+        return self._worker.gpu_error
 
     def load(self) -> None:
         self._load_requested.emit()

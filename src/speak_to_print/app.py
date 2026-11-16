@@ -26,6 +26,7 @@ from .hotkey import PortalHotkeys, Shortcut
 from .output import OutputError, clipboard_paste
 from .output.writer import TextWriter
 from .settings import Settings
+from .sounds import Sounds
 from .transcriber import Transcriber, Transcript
 from .ui.editor_window import EditorWindow
 from .ui.listening_popup import ListeningPopup
@@ -96,6 +97,21 @@ def _prepare_system_integration() -> None:
         log.warning("KWin pencere kuralı yazılamadı: %s", error)
 
 
+def _uninstall() -> int:
+    """Uygulamanın sisteme eklediği kayıtları kaldırır; kişisel verilere ve modele dokunmaz."""
+    print("Kickoff kaydı:", "kaldırıldı" if desktop_entry.uninstall() else "zaten yok")
+    print("KWin kuralı (dinleme penceresi):", "kaldırıldı" if kwin_rules.remove_popup_rule() else "zaten yok")
+    print("KWin kuralı (düzenleme penceresi):", "kaldırıldı" if kwin_rules.remove_editor_rule() else "zaten yok")
+    print("\nDokunulmayanlar (isterseniz elle silin; tam liste: docs/proje-disi-dosyalar.md):")
+    print("  ayarlar :", Path.home() / ".config" / "speak-to-print")
+    print("  geçmiş  :", Path.home() / ".local" / "share" / "speak-to-print")
+    print("  günlük  :", log_file_path().parent)
+    print("  model   : ~/.cache/huggingface  (uv run hf cache rm model/Systran/faster-whisper-large-v3)")
+    print("  kısayol : KDE Sistem Ayarları → Klavye → Kısayollar → Speak to Print")
+    print("\nUygulamayı yeniden açarsanız Kickoff kaydı ve kurallar yeniden yazılır.")
+    return 0
+
+
 class Application(QObject):
     """Uygulamanın parçalarını tutar ve aralarındaki bağlantıları kurar.
 
@@ -116,6 +132,7 @@ class Application(QObject):
         self._app_has_focus = app_has_focus or (
             lambda: QGuiApplication.applicationState() == Qt.ApplicationState.ApplicationActive)
         self.editor = EditorWindow()
+        self._previous_state = State.LOADING
         self.history = history or History()
         self._on_quit = on_quit or (lambda: None)
         self._quitting = False
@@ -137,6 +154,9 @@ class Application(QObject):
         self._focus_timer.timeout.connect(self._paste_when_focus_released)
         self.window = MainWindow()
         self.settings_dialog = SettingsDialog(self.settings)
+        self.sounds = Sounds(lambda: self.settings.sounds, lambda: self.settings.sound_volume, self)
+        if not self.sounds.available:
+            log.warning("Ses çalınamayacak: pw-play bulunamadı ya da ses dosyaları yazılamadı.")
         self.popup = ListeningPopup(seconds_recorded=lambda: self.recorder.seconds)
         self.tray = Tray()
         self.hotkeys = PortalHotkeys(desktop_entry.APP_ID, [Shortcut(SHORTCUT_ID, SHORTCUT_DESCRIPTION)])
@@ -153,6 +173,7 @@ class Application(QObject):
         self.recorder.level.connect(self.popup.set_level)
         self.recorder.notice.connect(self._on_notice)
         self.transcriber.ready.connect(self._on_model_ready)
+        self.transcriber.status.connect(self._on_loading_status)
         self.transcriber.done.connect(self._on_transcript)
 
         self.popup.pause_clicked.connect(self.controller.pause_resume)
@@ -177,6 +198,7 @@ class Application(QObject):
         self.window.configure_shortcut_clicked.connect(self.hotkeys.configure)
         self.window.settings_clicked.connect(self.settings_dialog.open)
         self.settings_dialog.configure_shortcut_clicked.connect(self.hotkeys.configure)
+        self.settings_dialog.test_sound_clicked.connect(lambda: self.sounds.play("start", force=True))
         self.window.listen_clicked.connect(lambda: self._toggle_from("ana pencere"))
         self.window.closed.connect(self.shutdown)
         self.tray.listen_clicked.connect(lambda: self._toggle_from("tepsi menüsü"))
@@ -210,7 +232,8 @@ class Application(QObject):
         summary = (f"otomatik yapıştırma={self.settings.auto_paste}, ipucu={self.settings.use_prompt}, "
                    f"kısayol kipi={self.settings.hotkey_mode}, yazma={self.settings.output_method}, "
                    f"mikrofon={'seçili' if self.settings.microphone_id else 'varsayılan'}, "
-                   f"sözlük={len(self.settings.vocabulary)} terim, geçmiş={self.settings.keep_history}")
+                   f"sözlük={len(self.settings.vocabulary)} terim, geçmiş={self.settings.keep_history}, "
+                   f"ses={self.settings.sounds}")
         if summary != getattr(self, "_last_summary", ""):
             self._last_summary = summary
             log.info("Ayarlar: %s", summary)
@@ -319,13 +342,25 @@ class Application(QObject):
             log.error("Durum: %s (%s)", state.name, self.controller.failure)
         else:
             log.info("Durum: %s", state.name)
+        # Ses: dinleme başlarken yükselen, biterken alçalan iki nota. İptalde ses çalınmaz.
+        if state is State.LISTENING and self._previous_state is State.IDLE:
+            self.sounds.play("start")
+        elif state is State.TRANSCRIBING:
+            self.sounds.play("stop")
+        self._previous_state = state
         self.popup.set_state(state)
         self.editor.set_state(state)
         self.window.set_state(state, self.controller.failure)
         self.tray.set_state(state)
 
+    def _on_loading_status(self, text: str) -> None:
+        log.info("Model: %s", text)
+        self.window.show_loading_status(text)
+
     def _on_model_ready(self, seconds: float, device: str) -> None:
         log.info("Model yüklendi: %.1f sn (%s)", seconds, device)
+        if device != "cuda":
+            log.warning("Ekran kartı kullanılamadı, işlemciye geçildi: %s", self.transcriber.gpu_error)
         self.window.set_model_info(seconds, device)
 
     def _on_transcript(self, transcript: Transcript) -> None:
@@ -389,7 +424,11 @@ class Application(QObject):
 def main() -> int:
     parser = argparse.ArgumentParser(prog="speak-to-print", description="Yerel dikte uygulaması.")
     parser.add_argument("--quit-after", type=float, help=argparse.SUPPRESS)  # yalnızca otomatik denemeler için
+    parser.add_argument("--uninstall", action="store_true",
+                        help="Kickoff kaydını ve KWin pencere kurallarını kaldırır (ayarlar, geçmiş ve model kalır)")
     args = parser.parse_args()
+    if args.uninstall:
+        return _uninstall()
     _setup_logging()
 
     app = QApplication(sys.argv)

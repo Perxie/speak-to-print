@@ -66,6 +66,27 @@ class Settings(QObject):
         self._set("keep_history", value, self.keep_history)
 
     @property
+    def sounds(self) -> bool:
+        """Dinleme başlarken ve biterken kısa bir ses çalınsın mı?"""
+        return self._bool("sounds", True)
+
+    @sounds.setter
+    def sounds(self, value: bool) -> None:
+        self._set("sounds", value, self.sounds)
+
+    @property
+    def sound_volume(self) -> int:
+        """Başlama/bitiş sesinin yüksekliği, 0–100."""
+        try:
+            return max(0, min(100, int(self._str("sound_volume", "50"))))
+        except ValueError:
+            return 50
+
+    @sound_volume.setter
+    def sound_volume(self, value: int) -> None:
+        self._set("sound_volume", str(max(0, min(100, int(value)))), str(self.sound_volume))
+
+    @property
     def hotkey_mode(self) -> str:
         """"toggle": bas başlat, tekrar bas bitir. "hold": basılı tutarken dinle."""
         value = self._str("hotkey_mode", "toggle")

@@ -7,6 +7,8 @@ Proje dışına yeni bir şey yazıldığında bu liste güncellenir.
 `/tmp` altındaki geçici dosyalar bellekte tutulur (tmpfs) ve bilgisayar kapanınca kendiliğinden silinir;
 onlar listede yok. `~/.cache` ise adına rağmen diskte durur ve kendiliğinden silinmez.
 
+Kickoff kaydını ve KWin kurallarını tek komutla kaldırmak için: `uv run speak-to-print --uninstall`.
+
 ## Uygulama çalıştığı sürece gerekli olanlar
 
 | Ne | Nerede | Boyut | Silmek için |

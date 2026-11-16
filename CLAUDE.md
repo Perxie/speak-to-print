@@ -6,6 +6,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `uv sync`: `.venv`'i `pyproject.toml` ve `uv.lock`'a göre kurar ya da günceller.
 - `uv run speak-to-print`: uygulamayı çalıştırır. Günlüğü: `~/.local/state/speak-to-print/speak-to-print.log` (durumlar, süreler, yazma yöntemi; dikte edilen metin yazılmaz). Kullanıcı denemelerinden sonra sonucu buradan oku.
 - `uv add <paket>`: bağımlılık ekler. `pip install` kullanma.
+- `uv run speak-to-print --uninstall`: Kickoff kaydını ve KWin pencere kurallarını kaldırır (ayarlar, geçmiş, günlük ve model kalır).
 - `uv run pytest`: birim testleri (durum makinesi, uydurma metin önlemi); ekran, mikrofon ve model gerektirmez.
 - `uv run python spikes/gpu_check.py [--model large-v3-turbo]`: modeli GPU'da dener, hızı ve bellek kullanımını ölçer.
 - `uv run python spikes/mic_check.py [--list] [--device "USB PnP"] [--seconds 10]`: mikrofondan kayıt alır, seviyeyi ölçer, Türkçe yazıya çevirir.
@@ -21,7 +22,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `src/speak_to_print/`: uygulama kodu. `spikes/`: Faz 0 deneme betikleri (uygulamaya dahil değil); `spikes/data/` git dışı.
 - `src/speak_to_print/app.py`: giriş noktası; parçaları oluşturup bağlar, tek kopya denetimi yapar, açılışta Kickoff kaydını ve KWin kuralını günceller.
 - `src/speak_to_print/controller.py`: durum makinesi (`State`, `Outcome`); bağımlılıkları dışarıdan alır, `tests/test_controller.py` sahte nesnelerle sınar. Yeni davranış eklerken önce buraya ve teste bak.
-- `src/speak_to_print/audio.py` (`Recorder`), `transcriber.py` (`Transcriber`, ayrı QThread), `textguard.py` (uydurma metin kalıpları), `settings.py` (QSettings), `history.py` (`History`: SQLite geçmişi, `~/.local/share/speak-to-print/history.db`), `config.py` (sabitler; `POPUP_TITLE`/`POPUP_SIZE` KWin kuralıyla eşleşmek zorunda).
+- `src/speak_to_print/audio.py` (`Recorder`), `transcriber.py` (`Transcriber`, ayrı QThread), `textguard.py` (uydurma metin kalıpları), `settings.py` (QSettings), `sounds.py` (başlama/bitiş sesleri; dosyalar `/run/user/<kimlik>/speak-to-print` altında üretilir, `pw-play` ile çalınır), `history.py` (`History`: SQLite geçmişi, `~/.local/share/speak-to-print/history.db`), `config.py` (sabitler; `POPUP_TITLE`/`POPUP_SIZE` KWin kuralıyla eşleşmek zorunda).
 - `src/speak_to_print/ui/`: `listening_popup.py` (odak almayan, sabit boyutlu küçük pencere), `editor_window.py` (odak alan düzenleme penceresi; küçük pencerenin üstünde açılır), `main_window.py`, `tray.py`, `settings_dialog.py` (ayarlar; değişiklikler anında `Settings`'e yazılır).
 - `src/speak_to_print/hotkey.py`: `PortalHotkeys` (QObject), XDG GlobalShortcuts portalını ayrı bir asyncio iş parçacığında dinler; `activated`/`deactivated`/`bound`/`failed` Qt sinyalleri verir.
 - `src/speak_to_print/desktop_entry.py`: `APP_ID` (`io.github.perxie.SpeakToPrint`) ve Kickoff kaydını yazan `install()`. Portal, kimliği bu `.desktop` dosyasının adından tanır.
@@ -51,10 +52,16 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - KWin 6.8, `kwinrulesrc`'de kural listesini `[General] Order=` anahtarında tutuyor (eski `count=`/`rules=` biçimini yüklerken çeviriyor); `kreadconfig6` bu dosyanın `[General]` bölümünü boş döndürüyor.
 - pip'ten gelen PySide6, KDE'nin Breeze görünümünü almıyor (görünüm `fusion`); yalnızca görsel fark.
 - Mikrofon yokken sistemin varsayılan ses kaynağı bir *monitor* olabilir; mikrofon sanılmamalı.
+- Mikrofon kayıt sırasında çıkarılınca `QAudioSource` hata bildirmiyor (ses sistemi akışı sessizce başka aygıta taşıyor); kayıp, `QMediaDevices.audioInputsChanged` ile aygıt listesinden izleniyor (`Recorder._on_inputs_changed`). `QAudioSource.stateChanged` sinyaline Python işlevi bağlama: bu PySide sürümünde `QAudio::State` çevrilemiyor ve her durum değişiminde TypeError basıyor.
+- Uygulama seslerini `QSoundEffect` ile çalma: Qt bu akışları `media.role=event` (bildirim) olarak işaretliyor ve kullanıcının KDE'sinde bildirim sesleri sessizde, hiç duyulmuyor. `sounds.py` sesleri `pw-play` ile çalar. Ses denemelerinde çıkışın monitörünü dinleyip tepe seviyesine bakma (kullanıcının o an dinlediği ses de karışır); akışın kendi özelliklerine bak: `pactl -f json list sink-inputs` (rol, sessiz, hedef).
+- Kullanıcının sayı biçimi Türkçe (`LC_NUMERIC=tr_TR`, ondalık virgül): dış programlara ondalıklı sayı argümanı verme; ses yüksekliği bu yüzden dosyanın içine işleniyor.
+- Bir süredir ses çalmayan çıkış aygıtı (özellikle Bluetooth) sesin ilk anını yutabilir; `sounds.py` her sesin başına 0,25 sn sessizlik koyuyor.
 - BTD 700 (Bluetooth) mikrofonu açıldıktan sonraki ilk yaklaşık yarım saniyeyi kaçırabiliyor; kayıt sırasında kulaklığın ses kalitesi de düşüyor. Kullanıcı ikisini de kabul etti: mikrofonu sürekli açık tutma ya da bu gecikmeyi gidermeye uğraşma.
 - Whisper kısık ya da uzak seste metin uydurabiliyor: bilinen altyazı kalıpları ("Altyazı M.K.") ya da kendisine verilen ipucu metninin karışık bir tekrarı. İkisi de `textguard.py`'de yakalanıp yazılmıyor; modelin güven değerleri bunları ayırt etmiyor. İpucu metnini değiştirirsen yankı önlemini gerçek kayıtlarla yeniden sına.
 - `language="tr"` ile tamamı İngilizce bir cümle Türkçeye çevriliyor; cümle içindeki İngilizce terimler ve kısa İngilizce cümleler ise korunuyor.
 - Modeller `~/.cache/huggingface`'ta durur; model dosyaları ve ses kayıtları git'e girmez.
+- `uv` komutlarını `XDG_DATA_HOME` değiştirilmiş bir ortamda çalıştırma: uv kendi Python'unu orada arar, bulamayınca yenisini indirip `.venv`'i ona bağlayarak yeniden kurar. Denemelerde uygulamanın klasörlerini ayırmak gerekiyorsa `.venv/bin/python` ya da `.venv/bin/speak-to-print` ile çalıştır.
+- Ekran kartı kullanılamazsa model işlemciye (`int8`) yüklenir: 8 sn ses yaklaşık 4 sn'de çevrilir. Model önbellekte yoksa bir kez indirilir; `download_model(local_files_only=True)` ağa çıkmaz, bu yüzden `HF_HUB_OFFLINE` kullanılmıyor.
 - Kullanıcının kabuğu fish: ortamı elle etkinleştirmek için `source .venv/bin/activate.fish`.
 
 ## Çalışma kuralları

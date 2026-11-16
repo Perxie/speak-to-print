@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtMultimedia import QMediaDevices
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPlainTextEdit, QPushButton,
-                               QRadioButton, QVBoxLayout, QWidget)
+                               QRadioButton, QSlider, QVBoxLayout, QWidget)
 
 from ..audio import default_microphone, device_id, microphones
 from ..desktop_entry import APP_NAME
@@ -14,6 +14,7 @@ from ..settings import Settings
 
 class SettingsDialog(QWidget):
     configure_shortcut_clicked = Signal()
+    test_sound_clicked = Signal()
 
     def __init__(self, settings: Settings) -> None:
         super().__init__()
@@ -45,6 +46,17 @@ class SettingsDialog(QWidget):
         self.use_prompt = QCheckBox("Noktalama ipucu: modele noktalı bir örnek metin ver")
         self.keep_history = QCheckBox("Dikte edilen metinleri geçmişe kaydet")
         self.keep_history.setToolTip("Kapalıyken yeni dikteler kaydedilmez; var olan kayıtlar silinmez.")
+        self.sounds = QCheckBox("Dinleme başlarken ve biterken kısa bir ses çal")
+        self.test_sound_button = QPushButton("Sesi dene")
+        self.sound_volume = QSlider(Qt.Orientation.Horizontal)
+        self.sound_volume.setRange(5, 100)
+        self.sound_volume.setFixedWidth(140)
+        self.sound_volume.setToolTip("Ses yüksekliği")
+        sounds_row = QHBoxLayout()
+        sounds_row.addWidget(self.sounds, 1)
+        sounds_row.addWidget(QLabel("Yükseklik:"))
+        sounds_row.addWidget(self.sound_volume)
+        sounds_row.addWidget(self.test_sound_button)
 
         # Sözlük
         self.vocabulary = QPlainTextEdit()
@@ -69,12 +81,14 @@ class SettingsDialog(QWidget):
         layout.addWidget(self.auto_paste)
         layout.addWidget(self.use_prompt)
         layout.addWidget(self.keep_history)
+        layout.addLayout(sounds_row)
         layout.addWidget(QLabel("Sözlük:"))
         layout.addWidget(vocabulary_help)
         layout.addWidget(self.vocabulary, 1)
         layout.addLayout(bottom)
 
         self.shortcut_button.clicked.connect(self.configure_shortcut_clicked)
+        self.test_sound_button.clicked.connect(self.test_sound_clicked)
         self.mode_toggle.toggled.connect(self._on_mode_changed)
         self.microphone.activated.connect(self._on_microphone_chosen)
         self.output_method.activated.connect(
@@ -82,6 +96,8 @@ class SettingsDialog(QWidget):
         self.auto_paste.toggled.connect(lambda value: setattr(self._settings, "auto_paste", value))
         self.use_prompt.toggled.connect(lambda value: setattr(self._settings, "use_prompt", value))
         self.keep_history.toggled.connect(lambda value: setattr(self._settings, "keep_history", value))
+        self.sounds.toggled.connect(lambda value: setattr(self._settings, "sounds", value))
+        self.sound_volume.valueChanged.connect(self._on_volume_changed)
         self.vocabulary.textChanged.connect(self._on_vocabulary_changed)
         close_button.clicked.connect(self.hide)
 
@@ -111,6 +127,8 @@ class SettingsDialog(QWidget):
             self.auto_paste.setChecked(settings.auto_paste)
             self.use_prompt.setChecked(settings.use_prompt)
             self.keep_history.setChecked(settings.keep_history)
+            self.sounds.setChecked(settings.sounds)
+            self.sound_volume.setValue(settings.sound_volume)
             if self._vocabulary_terms() != settings.vocabulary:
                 self.vocabulary.setPlainText("\n".join(settings.vocabulary))
             self._fill_microphones()
@@ -136,6 +154,10 @@ class SettingsDialog(QWidget):
     def _on_mode_changed(self, _checked: bool) -> None:
         if not self._refreshing:
             self._settings.hotkey_mode = "hold" if self.mode_hold.isChecked() else "toggle"
+
+    def _on_volume_changed(self, value: int) -> None:
+        if not self._refreshing:
+            self._settings.sound_volume = value
 
     def _on_microphone_chosen(self, _index: int) -> None:
         self._settings.microphone_id = self.microphone.currentData() or ""

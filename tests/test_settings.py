@@ -9,7 +9,7 @@ def make(tmp_path):
 
 def test_defaults(tmp_path):
     s = make(tmp_path)
-    assert s.auto_paste and s.use_prompt and s.keep_history
+    assert s.auto_paste and s.use_prompt and s.keep_history and s.sounds
     assert s.hotkey_mode == "toggle" and s.output_method == "auto"
     assert s.microphone_id == "" and s.vocabulary == []
 
@@ -42,3 +42,18 @@ def test_same_value_does_not_emit_and_invalid_is_ignored(tmp_path):
     s.output_method = "bilinmeyen"
     s.vocabulary = []
     assert changes == [] and s.hotkey_mode == "toggle" and s.output_method == "auto"
+
+
+def test_sounds_setting_persists(tmp_path):
+    s = make(tmp_path)
+    s.sounds = False
+    assert make(tmp_path).sounds is False
+
+
+def test_sound_volume_is_clamped_and_persists(tmp_path):
+    s = make(tmp_path)
+    assert s.sound_volume == 50
+    s.sound_volume = 250
+    assert s.sound_volume == 100
+    s.sound_volume = 20
+    assert make(tmp_path).sound_volume == 20

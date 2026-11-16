@@ -62,6 +62,11 @@ class Recorder(QObject):
         self._stopping = False
         self.device_name = ""
         self.preferred_device_id = ""  # boş: sistem varsayılanı (ayarlardan gelir)
+        self._device_id = ""  # kayıt alınan aygıtın kimliği
+        # Aygıt takılıp çıkarılınca haber verir. Mikrofon çıkarılınca ses sistemi kaydı sessizce başka bir
+        # aygıta taşıyabiliyor ve hata bildirmiyor; bu yüzden listeyi kendimiz izliyoruz.
+        self._devices = QMediaDevices(self)
+        self._devices.audioInputsChanged.connect(self._on_inputs_changed)
 
     @property
     def is_recording(self) -> bool:
@@ -90,6 +95,7 @@ class Recorder(QObject):
             self.failed.emit(f"{device.description()} 16 kHz mono kaydı desteklemiyor.")
             return False
         self.device_name = device.description()
+        self._device_id = device_id(device)
         self._chunks = []
         self._paused = False
         self._stopping = False
@@ -118,6 +124,15 @@ class Recorder(QObject):
     def cancel(self) -> None:
         """Kaydı atar; `finished` yayılmaz."""
         self._cleanup()
+
+    def _on_inputs_changed(self) -> None:
+        """Kayıt alınan mikrofon listeden kaybolduysa (çıkarıldıysa) kaydı bırakır ve haber verir."""
+        if self._source is None or self._stopping:
+            return
+        if self._device_id not in {device_id(mic) for mic in microphones()}:
+            name = self.device_name
+            self._cleanup()
+            self.failed.emit(f"Mikrofon kayboldu ({name}); dinleme durduruldu.")
 
     def _read(self) -> None:
         if self._io is None:
