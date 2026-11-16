@@ -2,7 +2,7 @@
 
 > **Durum:** Kullanıcı bu planı 15 Kasım 2026'da onayladı. Metindeki "onaylanana kadar kod yazılmaz" ifadesi artık geçerli değil. İlerleme için `PROGRESS.md`'ye bakın.
 >
-> **Denemelerle değişenler** (güncel hâli `CLAUDE.md`'de): Faz 0.2'de cuDNN'in gerekmediği görüldü (yalnızca `nvidia-cublas-cu12`), PyAV 19'dan küçük sürüme sabitlendi.
+> **Denemelerle değişenler** (güncel hâli `CLAUDE.md`'de): Faz 0.2'de cuDNN'in gerekmediği görüldü (yalnızca `nvidia-cublas-cu12`), PyAV 19'dan küçük sürüme sabitlendi. Faz 0.3'te bağımlılık `pyside6-addons` oldu (WebEngine'siz); Qt mikrofon adlarını KDE'den farklı gösterebiliyor (ör. "BTD 700 Mono").
 
 ## İnceleme sonucu (ikinci model, 15 Kasım 2026)
 
