@@ -12,6 +12,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `uv run python spikes/model_compare.py [--models large-v3 ...]`: kayıtları aday modellerle çevirir, `recordings/set/report.md` raporunu yazar.
 - `uv run python spikes/hotkey_check.py [--install-desktop | --uninstall-desktop] [--no-model]`: portal kısayolunu ve Kickoff'tan açılışı deneyen pencere; günlüğü `spikes/data/hotkey_check.log`.
 - `uv run python spikes/type_check.py`: test cümlesini seçilen yöntemle etkin pencereye yazar (etkileşimli); günlüğü `spikes/data/type_check.log`.
+- `uv run python spikes/popup_check.py [--probe | --install-rule | --remove-rule]`: dinleme penceresinin odağı çalıp çalmadığını dener; günlüğü `spikes/data/popup_check.log`.
 
 ## Nerede ne var
 - `docs/model-karsilastirma.md`: Faz 0.4 sonuçları, model kararı ve açık konular (ipucu metni, sözlük, uydurma metin).
@@ -20,6 +21,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `src/speak_to_print/hotkey.py`: `PortalHotkeys` (QObject), XDG GlobalShortcuts portalını ayrı bir asyncio iş parçacığında dinler; `activated`/`deactivated`/`bound`/`failed` Qt sinyalleri verir.
 - `src/speak_to_print/desktop_entry.py`: `APP_ID` (`io.github.perxie.SpeakToPrint`) ve Kickoff kaydını yazan `install()`. Portal, kimliği bu `.desktop` dosyasının adından tanır.
 - `src/speak_to_print/output/`: `kwin_type.type_text()` ve `clipboard_paste.ClipboardPaster` (panoyu saklar, `--sensitive` ile ayarlar, sanal klavyeden yapıştırma tuşuna basar, geri yükler). Sanal klavyeyi oluşturmak ~2 sn sürer; bir kez oluşturup yeniden kullan.
+- `src/speak_to_print/kwin_rules.py`: dinleme penceresi için KWin pencere kuralını (odak alma, her zaman üstte, konum) `~/.config/kwinrulesrc`'ye yazar/siler. Pencere, uygulama kimliği ve tam başlıkla eşleşir.
 - `src/speak_to_print/cuda_libs.py`: `preload_cuda_libraries()`, pip'ten gelen cuBLAS'ı `LD_LIBRARY_PATH` olmadan yükler. GPU'da model oluşturmadan önce çağrılmalı.
 
 ## Önemli kararlar (ayrıntı: `docs/plan.md`)
@@ -37,6 +39,8 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Kullanıcı Türkçe Q, Türkçe F ve bir İngilizce düzen kullanabilir. Tuş koduna dayalı her şey düzenden bağımsız olmalı (Türkçe F'de ABD'deki V tuşu `c` yazar).
 - Kickoff'tan açılan program terminaldeki ortam değişkenlerini görmez. (Faz 0.5'te denendi: Kickoff'tan açılışta model GPU'ya yükleniyor, kısayol çalışıyor.)
 - Portal kısayolu: `BindShortcuts` ilk seferde tuş atanmamış (`''`) dönebiliyor; tuş `ConfigureShortcuts` penceresinden atanıyor ve `ShortcutsChanged` ile geliyor. Ctrl+Pause seçilince KDE yalnızca "Control" kaydetti ve bozuk çalıştı (klavyede Ctrl+Pause ayrı bir "Break" tuşu); kullanıcının kısayolu Shift+Pause.
+- Wayland'de Qt'nin `WindowDoesNotAcceptFocus` ve `WA_ShowWithoutActivating` ayarları tek başına işe yaramıyor: pencere açılınca odağı alıyor. Odak almayan pencere için KWin pencere kuralı gerekiyor. Qt pencerenin ekrandaki yerini de bilmiyor (konum hep 0,0 görünür).
+- KWin 6.8, `kwinrulesrc`'de kural listesini `[General] Order=` anahtarında tutuyor (eski `count=`/`rules=` biçimini yüklerken çeviriyor); `kreadconfig6` bu dosyanın `[General]` bölümünü boş döndürüyor.
 - pip'ten gelen PySide6, KDE'nin Breeze görünümünü almıyor (görünüm `fusion`); yalnızca görsel fark.
 - Mikrofon yokken sistemin varsayılan ses kaynağı bir *monitor* olabilir; mikrofon sanılmamalı.
 - BTD 700 (Bluetooth) mikrofonu açıldıktan sonraki ilk yaklaşık yarım saniyeyi kaçırabiliyor; kayıt sırasında kulaklığın ses kalitesi de düşüyor. Kullanıcı ikisini de kabul etti: mikrofonu sürekli açık tutma ya da bu gecikmeyi gidermeye uğraşma.

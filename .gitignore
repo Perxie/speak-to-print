@@ -22,3 +22,7 @@ dist/
 *.ogg
 *.safetensors
 *.bin
+
+# Proje köküne bırakılan ekran görüntüleri (kişisel, git'e girmez)
+/*.png
+/*.jpg

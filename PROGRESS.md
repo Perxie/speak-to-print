@@ -3,20 +3,14 @@
 <!-- Bu dosya kısa kalır: "Şu an" bölümünün üstüne yazılır, biten maddeler birikince tek satırlık özete indirilir. -->
 
 ## Şu an
-- Son yapılan: Faz 0.6 tamamlandı, kullanıcı deneyip onayladı; commit edilip GitHub'a gönderildi. Varsayılan yazma yöntemi **kwin-type** (1–2 ms, panoya dokunmuyor, izin penceresi çıkmadı; Kate, WhatsApp Web, Konsole ve PyCharm terminalinde 1690 karakterlik metin doğru çıktı). Yedek: pano + Shift+Insert (~0,5 sn; aynı uygulamalarda çalıştı, pano geri geldi).
-- Yarım kalan: Faz 0.7 başladı (kullanıcı onay verdi): `spikes/popup_check.py` ile dinleme penceresinin odağı çalıp çalmadığı deneniyor (önce Qt bayrakları, yetmezse KWin pencere kuralı).
-- Sıradaki: Kullanıcı Kate'te kısayolla pencereyi açıp Bitir'e tıklayacak; metin Kate'e gitmeli.
+- Son yapılan: Faz 0.7 ve böylece Faz 0'ın tamamı bitti; kullanıcı deneyip onayladı, commit edilip GitHub'a gönderildi. Dinleme penceresi KWin pencere kuralıyla odağı almıyor: düğmelere fareyle tıklanınca da odak hedef pencerede kalıyor ve metin oraya yazılıyor; pencere ekranın alt ortasında, üstte duruyor.
+- Yarım kalan: Yok.
+- Sıradaki: Faz 1 — çalışan çekirdek. Başlamadan önce kullanıcının onayı beklenir. Faz 0'da yazılan modüller (`hotkey.py`, `output/`, `kwin_rules.py`, `desktop_entry.py`, `cuda_libs.py`) ve `spikes/` içindeki kayıt/çeviri kodu yeniden kullanılacak.
 
 ## Yapılacaklar
 
 ### Faz 0 — Kurulum ve riskli parçaların denemeleri
-- [x] 0.1 Kurulum: `uv run speak-to-print` çalışıyor, PyCharm `.venv`'i kullanıyor.
-- [x] 0.2 GPU: large-v3 ekran kartında örnek bir kaydı gerçek zamandan çok hızlı çeviriyor.
-- [x] 0.3 Mikrofon: sistem varsayılanından temiz kayıt alınıyor. BTD 700'de Enter'a basar basmaz konuşunca ilk hece kesildi ("Portakal" → "Kalsuyu", kayıt 0,4 sn kısa geldi); kullanıcı ~0,5 sn beklemeyi kabul etti.
-- [x] 0.4 Model karşılaştırması: kullanıcının kayıtlarıyla tablo çıktı, large-v3 seçildi, karışık dil hedefi sürüyor (`docs/model-karsilastirma.md`).
-- [x] 0.5 Kısayol: portal kısayolu Kickoff'tan açılışta da, yeniden açılıştan sonra da çalışıyor; basılı tutma da algılanıyor. (Klavye düzeni değiştirerek denenmedi.)
-- [x] 0.6 Yazma: kwin-type seçildi, yedek pano + Shift+Insert. İkisi de Türkçe Q, Türkçe F ve İngilizce (US) düzenlerinde uzun metinle birebir doğru çıktı; yedek yöntemde metin Klipper geçmişine düşmedi. Ctrl+V Türkçe F'de çalışmadı (beklendiği gibi). Denenmeyenler: PyCharm editörü, ayrı bir Firefox alanı.
-- [ ] 0.7 Dinleme penceresi: Bitir'e tıklayınca metin Kate'e gidiyor, pencere odağı çalmıyor.
+- [x] Hepsi geçti (0.1–0.7): uv projesi, GPU'da large-v3, mikrofon (QtMultimedia), model seçimi (`docs/model-karsilastirma.md`), portal kısayolu (Shift+Pause), kwin-type ile yazma (yedek pano + Shift+Insert; Türkçe Q/F ve US düzenlerinde), odak almayan dinleme penceresi (KWin kuralı). Ayrıntılar `CLAUDE.md`'de; denenmeyenler: PyCharm editörüne ve ayrı bir Firefox alanına kwin-type ile yazma.
 
 ### Faz 1 — Çalışan çekirdek
 - [ ] Kickoff'tan açılıyor; kısayolla dinliyor, Beklet/Bitir/İptal çalışıyor, metin imlece yazılıyor; kapanınca GPU belleği boşalıyor. Not: dinleme penceresi mikrofondan ses gelmeye başladığını göstersin (BTD 700 geç açılıyor); durdurunca son hece kesilmesin diye kısa bir süre daha kayıt alınsın. Kısayol atanmamışsa (ilk açılışta boş gelebiliyor) kullanıcıya söylenip ayar penceresi açtırılsın. Uydurma metne karşı önlem ("Altyazı M.K.") ve ipucu metninin açık/kapalı olması burada denenecek.
