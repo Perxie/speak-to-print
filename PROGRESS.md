@@ -3,9 +3,9 @@
 <!-- Bu dosya kısa kalır: "Şu an" bölümünün üstüne yazılır, biten maddeler birikince tek satırlık özete indirilir. -->
 
 ## Şu an
-- Son yapılan: Faz 1 tamamlandı, kullanıcı gerçek ekranda deneyip onayladı ("çok iyi çalışıyor"); commit edilip GitHub'a gönderildi. 34 gerçek dikte yapıldı (USB ve BTD 700), metin imlece yazıldı; düğmeler, otomatik yapıştırma ayarı, ikinci açılış ve kapanış çalıştı. Ayrıca doğrulandı: dinlerken ve çevirirken kapatınca süreç bitiyor, ekran kartı belleği ve mikrofon serbest kalıyor. Noktalama ipucu kullanıcıya göre fark yaratmıyor (açık bırakıldı).
-- Yarım kalan: Kullanıcının iki yeni isteği (onay verildi sayılır, kendisi istedi): (1) çevrilen metnin gösterildiği yerde düzenlenebilmesi, (2) dinlemeyi kısayol dışında bir düğmeyle başlatabilmek.
-- Sıradaki: (1) için odak alabilen ayrı bir sonuç penceresi (küçük pencere odak alamıyor); (2) için ana pencerede ve tepsi menüsünde "Dinlemeyi başlat".
+- Son yapılan: Düzenleme penceresi ve "Dinlemeyi başlat" düğmeleri (ana pencere, tepsi menüsü) kullanıcı tarafından gerçek ekranda denendi ve onaylandı; commit edilip GitHub'a gönderildi. Düzenleyiciden Yapıştır'da odak önceki uygulamaya ~40 ms'de dönüyor; dikte ana pencereden başlatıldıysa dönecek uygulama olmadığı için yazılmıyor ve düzenleyici geri açılıyor (beklenen davranış).
+- Yarım kalan: Kullanıcı aynı "Dinlemeyi başlat" düğmesini küçük pencerede de istedi; ekleniyor.
+- Sıradaki: Küçük penceredeki düğmenin kullanıcı testi; sonra Faz 2'nin kalan maddesi (geçmiş listesi).
 
 ## Yapılacaklar
 
@@ -15,8 +15,10 @@
 ### Faz 1 — Çalışan çekirdek
 - [x] Kickoff'tan açılıyor; kısayolla dinliyor, Beklet/Bitir/İptal çalışıyor, metin imlece yazılıyor ve küçük pencerede gösteriliyor (Kopyala, Yapıştır, otomatik yapıştırma aç/kapa); kapanınca GPU belleği boşalıyor. Uydurma metin önlemi, son hece payı, "ses bekleniyor" göstergesi ve günlük dosyası dahil.
 
-### Faz 2 — Ana pencere ve geçmiş
-- [ ] Küçük penceredeki Düzenle düğmesi metni odak alan bir düzenleme penceresinde açıyor; son metin düzenlenip yeniden yapıştırılabiliyor (odağın eski pencereye dönmesi önce denenmeli); geçmiş uygulama yeniden açılınca da duruyor.
+### Faz 2 — Düzenleme ve geçmiş
+- [x] Çevrilen metin düzenleme penceresinde düzenlenip önceki uygulamaya yapıştırılabiliyor; dinleme düğmeyle de (ana pencere, tepsi menüsü) başlatılabiliyor.
+- [ ] "Dinlemeyi başlat" düğmesi küçük pencerede de var.
+- [ ] Son çevirilerin listesi; uygulama yeniden açılınca da duruyor (SQLite).
 
 ### Faz 3 — Ayarlar
 - [ ] Kısayol, kısayol davranışı, mikrofon, yazma yöntemi ve sözlük ayarlardan değiştirilebiliyor. (Model seçimi yok: tek model large-v3.)

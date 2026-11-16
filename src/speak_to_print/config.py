@@ -21,6 +21,10 @@ MIN_RECORDING_SECONDS = 0.4  # bundan kısa kayıtlar çevrilmez
 POPUP_TITLE = "Speak to Print — Dinleme"
 POPUP_SIZE = (560, 214)
 POPUP_BOTTOM_MARGIN = 90  # ekranın altından boşluk (Qt, Wayland'de görev çubuğunun yerini bilmez)
+# Düzenleme penceresi: odak alabilen ayrı bir pencere, dinleme penceresinin hemen üstünde durur.
+EDITOR_TITLE = "Speak to Print — Düzenle"
+EDITOR_SIZE = (560, 250)
+EDITOR_GAP = 8  # iki pencere arasındaki boşluk
 RESULT_HIDE_SECONDS = 6  # metin yazıldıktan sonra pencerenin kendiliğinden kapanma süresi
 
 SHORTCUT_ID = "dictate"

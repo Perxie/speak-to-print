@@ -20,6 +20,7 @@ import subprocess
 from pathlib import Path
 
 RULE_ID = "speak-to-print-dinleme"  # kuralın ayar dosyasındaki bölüm adı
+EDITOR_RULE_ID = "speak-to-print-duzenleme"
 FORCE = "2"  # KWin'de "Zorla": uygulama ne isterse istesin bu değer geçerli
 
 
@@ -74,26 +75,22 @@ def _reload_kwin() -> None:
                    capture_output=True, check=False)
 
 
-def popup_rule_installed() -> bool:
-    return RULE_ID in _rule_ids()
-
-
-def install_popup_rule(app_id: str, title: str, x: int, y: int) -> Path | None:
-    """Kuralı yazar ya da günceller. İlk seferde alınan yedeğin yolunu döndürür."""
+def _backup_once() -> Path | None:
+    """Ayar dosyasının ilk hâlini bir kez yedekler; yedek yeni alındıysa yolunu döndürür."""
     config = _config_path()
     backup = config.with_name(config.name + ".speak-to-print.yedek")
-    made_backup = None
     if config.exists() and not backup.exists():
         shutil.copy2(config, backup)
-        made_backup = backup
+        return backup
+    return None
 
+
+def _install_rule(rule_id: str, description: str, app_id: str, title: str, x: int, y: int, accept_focus: bool) -> None:
     settings = {
-        "Description": "Speak to Print dinleme penceresi",
+        "Description": description,
         # Hangi pencere: uygulama kimliği ve pencere başlığı tam eşleşmeli (1 = tam eşleşme).
         "wmclass": app_id, "wmclassmatch": "1",
         "title": title, "titlematch": "1",
-        # Odak alma: tıklansa bile klavye odağı yazı yazılan pencerede kalsın.
-        "acceptfocus": "false", "acceptfocusrule": FORCE,
         # Her zaman üstte ve görev çubuğu / pencere değiştiricide görünmesin.
         "above": "true", "aboverule": FORCE,
         "skiptaskbar": "true", "skiptaskbarrule": FORCE,
@@ -102,40 +99,82 @@ def install_popup_rule(app_id: str, title: str, x: int, y: int) -> Path | None:
         # Ekrandaki yeri.
         "position": f"{x},{y}", "positionrule": FORCE,
     }
+    if not accept_focus:
+        # Odak alma: tıklansa bile klavye odağı yazı yazılan pencerede kalsın.
+        settings |= {"acceptfocus": "false", "acceptfocusrule": FORCE}
     for key, value in settings.items():
-        _write(RULE_ID, key, value)
+        _write(rule_id, key, value)
     rules = _rule_ids()
-    if RULE_ID not in rules:
-        _set_rule_ids([*rules, RULE_ID])
+    if rule_id not in rules:
+        _set_rule_ids([*rules, rule_id])
+
+
+def _rule_matches(rule_id: str, app_id: str, title: str, x: int, y: int, accept_focus: bool) -> bool:
+    return (rule_id in _rule_ids() and _read(rule_id, "title") == title and _read(rule_id, "wmclass") == app_id
+            and _read(rule_id, "position") == f"{x},{y}"
+            and (_read(rule_id, "acceptfocus") == "false") == (not accept_focus))
+
+
+def _remove_rule(rule_id: str) -> bool:
+    rules = _rule_ids()
+    if rule_id not in rules:
+        return False
+    _set_rule_ids([rule for rule in rules if rule != rule_id])
+    config = _config_path()
+    if config.exists():
+        lines, skipping = [], False
+        for line in config.read_text(encoding="utf-8").splitlines():
+            if line.startswith("["):
+                skipping = line.strip() == f"[{rule_id}]"
+            if not skipping:
+                lines.append(line)
+        config.write_text("\n".join(lines).rstrip("\n") + "\n", encoding="utf-8")
+    return True
+
+
+# ---------------------------------------------------------------- dinleme penceresi (odak almaz)
+
+def popup_rule_installed() -> bool:
+    return RULE_ID in _rule_ids()
+
+
+def install_popup_rule(app_id: str, title: str, x: int, y: int) -> Path | None:
+    """Kuralı yazar ya da günceller. İlk seferde alınan yedeğin yolunu döndürür."""
+    backup = _backup_once()
+    _install_rule(RULE_ID, "Speak to Print dinleme penceresi", app_id, title, x, y, accept_focus=False)
     _reload_kwin()
-    return made_backup
+    return backup
 
 
 def ensure_popup_rule(app_id: str, title: str, x: int, y: int) -> bool:
     """Kural yoksa ya da başlığı/konumu farklıysa yazar. Bir şey değiştiyse True döner."""
-    if (popup_rule_installed() and _read(RULE_ID, "title") == title and _read(RULE_ID, "wmclass") == app_id
-            and _read(RULE_ID, "position") == f"{x},{y}" and _read(RULE_ID, "acceptfocus") == "false"):
+    if _rule_matches(RULE_ID, app_id, title, x, y, accept_focus=False):
         return False
     install_popup_rule(app_id, title, x, y)
     return True
 
 
 def remove_popup_rule() -> bool:
-    rules = _rule_ids()
-    if RULE_ID not in rules:
+    removed = _remove_rule(RULE_ID)
+    if removed:
+        _reload_kwin()
+    return removed
+
+
+# ---------------------------------------------------------------- düzenleme penceresi (odak alır)
+
+def ensure_editor_rule(app_id: str, title: str, x: int, y: int) -> bool:
+    """Düzenleme penceresini sabit bir yere ve üste koyan kural. Bu pencere odak alabilir."""
+    if _rule_matches(EDITOR_RULE_ID, app_id, title, x, y, accept_focus=True):
         return False
-    _set_rule_ids([rule for rule in rules if rule != RULE_ID])
-    subprocess.run(["kwriteconfig6", "--file", "kwinrulesrc", "--group", RULE_ID, "--key", "Description", "--delete"],
-                   check=False)
-    # Bölümün kalan anahtarlarını da temizle.
-    config = _config_path()
-    if config.exists():
-        lines, skipping = [], False
-        for line in config.read_text(encoding="utf-8").splitlines():
-            if line.startswith("["):
-                skipping = line.strip() == f"[{RULE_ID}]"
-            if not skipping:
-                lines.append(line)
-        config.write_text("\n".join(lines).rstrip("\n") + "\n", encoding="utf-8")
+    _backup_once()
+    _install_rule(EDITOR_RULE_ID, "Speak to Print düzenleme penceresi", app_id, title, x, y, accept_focus=True)
     _reload_kwin()
     return True
+
+
+def remove_editor_rule() -> bool:
+    removed = _remove_rule(EDITOR_RULE_ID)
+    if removed:
+        _reload_kwin()
+    return removed

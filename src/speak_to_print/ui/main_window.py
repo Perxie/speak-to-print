@@ -14,6 +14,7 @@ from ..desktop_entry import APP_NAME
 
 class MainWindow(QWidget):
     configure_shortcut_clicked = Signal()
+    listen_clicked = Signal()
     copy_clicked = Signal(str)
     auto_paste_toggled = Signal(bool)
     use_prompt_toggled = Signal(bool)
@@ -29,6 +30,10 @@ class MainWindow(QWidget):
         self.status.setStyleSheet("font-size: 15pt; font-weight: bold; padding: 4px;")
         self.detail = QLabel()
         self.detail.setWordWrap(True)
+        self.listen_button = QPushButton("Dinlemeyi başlat")
+        self.listen_button.setEnabled(False)
+        self.listen_button.setToolTip("Bu düğmeyle başlatınca bu pencere önde olduğu için metin başka uygulamaya yazılmaz; "
+                                      "küçük pencerede gösterilir, oradan kopyalayabilir, düzenleyebilir ya da yapıştırabilirsiniz.")
 
         self.shortcut = QLabel("Kısayol: bekleniyor…")
         self.shortcut_button = QPushButton("Kısayolu ayarla…")
@@ -53,7 +58,10 @@ class MainWindow(QWidget):
         bottom.addWidget(self.quit_button)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(self.status)
+        status_row = QHBoxLayout()
+        status_row.addWidget(self.status, 1)
+        status_row.addWidget(self.listen_button)
+        layout.addLayout(status_row)
         layout.addWidget(self.detail)
         layout.addLayout(shortcut_row)
         layout.addWidget(self.auto_paste)
@@ -63,6 +71,7 @@ class MainWindow(QWidget):
         layout.addLayout(bottom)
 
         self.shortcut_button.clicked.connect(self.configure_shortcut_clicked)
+        self.listen_button.clicked.connect(self.listen_clicked)
         self.copy_button.clicked.connect(lambda: self.copy_clicked.emit(self.last_text.toPlainText()))
         self.quit_button.clicked.connect(self.close)
         self.auto_paste.toggled.connect(self.auto_paste_toggled)
@@ -79,10 +88,14 @@ class MainWindow(QWidget):
         self.status.setText({State.LOADING: "Model yükleniyor…", State.IDLE: "Hazır",
                              State.LISTENING: "● Dinliyor", State.PAUSED: "❚❚ Beklemede",
                              State.TRANSCRIBING: "Çevriliyor…", State.FAILED: "Model yüklenemedi"}[state])
+        self.listen_button.setText("Bitir" if state in (State.LISTENING, State.PAUSED) else "Dinlemeyi başlat")
+        self.listen_button.setEnabled(state in (State.IDLE, State.LISTENING, State.PAUSED))
         if state is State.FAILED:
             self.detail.setText(failure)
         elif state is State.IDLE:
             self._show_hint()
+        elif state is State.LISTENING:
+            self.detail.setText("Konuşun. Bitirmek için kısayola ya da Bitir'e basın.")
 
     def set_model_info(self, seconds: float, device: str) -> None:
         self._model_info = f"Model {seconds:.1f} sn'de yüklendi ({'ekran kartı' if device == 'cuda' else device})."
@@ -108,6 +121,12 @@ class MainWindow(QWidget):
             self.last_text.setPlainText(outcome.text)
             self.copy_button.setEnabled(True)
         self.detail.setText(outcome.note)
+
+    def set_last_text(self, text: str) -> None:
+        """Düzenleme penceresinde değişen metni buraya da yansıtır."""
+        if self.last_text.toPlainText() != text:
+            self.last_text.setPlainText(text)
+            self.copy_button.setEnabled(bool(text))
 
     def show_notice(self, text: str) -> None:
         self.detail.setText(text)

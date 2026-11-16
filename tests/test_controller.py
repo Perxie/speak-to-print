@@ -243,3 +243,16 @@ def test_prompt_setting_is_passed_to_transcriber(h):
     h.controller.toggle()
     h.recorder.finished.emit(ONE_SECOND)
     assert h.transcriber.requests[-1] == ("transcribe", SAMPLE_RATE, False)
+
+
+def test_paste_text_types_edited_text_and_remembers_it(h):
+    h.ready().dictate("İlk hâli.")
+    h.controller.paste_text("Düzeltilmiş hâli.")
+    assert h.written == ["İlk hâli. ", "Düzeltilmiş hâli. "]
+    assert h.controller.last_text == "Düzeltilmiş hâli." and h.outcomes[-1].pasted
+
+
+def test_paste_text_ignores_blank_text(h):
+    h.ready()
+    h.controller.paste_text("   ")
+    assert h.written == [] and h.outcomes == []

@@ -10,7 +10,7 @@ Kural pencerenin sol üst köşesini sabitlediği için pencerenin boyutu sabitt
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QCheckBox, QHBoxLayout, QLabel, QPlainTextEdit, QProgressBar, QPushButton,
                                QVBoxLayout, QWidget)
 
@@ -38,6 +38,7 @@ class ListeningPopup(QWidget):
     paste_clicked = Signal()
     copy_clicked = Signal(str)
     auto_paste_toggled = Signal(bool)
+    edit_requested = Signal(str)  # kullanıcı metne ya da Düzenle'ye tıkladı
 
     def __init__(self, seconds_recorded) -> None:
         """`seconds_recorded`: o ana kadar kaydedilen süreyi döndüren işlev."""
@@ -67,6 +68,8 @@ class ListeningPopup(QWidget):
 
         self.text = QPlainTextEdit(readOnly=True)
         self.text.setPlaceholderText("Çevrilen metin burada görünecek.")
+        self.text.setToolTip("Düzenlemek için metne tıklayın.")
+        self.text.viewport().installEventFilter(self)
         self.note = QLabel()
         self.note.setObjectName("note")
         self.note.setWordWrap(True)
@@ -74,11 +77,12 @@ class ListeningPopup(QWidget):
         self.pause_button = QPushButton("Beklet")
         self.finish_button = QPushButton("Bitir")
         self.cancel_button = QPushButton("İptal")
+        self.edit_button = QPushButton("Düzenle")
         self.copy_button = QPushButton("Kopyala")
         self.paste_button = QPushButton("Yapıştır")
         self.close_button = QPushButton("Kapat")
         self._listening_buttons = (self.pause_button, self.finish_button, self.cancel_button)
-        self._result_buttons = (self.copy_button, self.paste_button, self.close_button)
+        self._result_buttons = (self.edit_button, self.copy_button, self.paste_button, self.close_button)
 
         top = QHBoxLayout()
         top.addWidget(self.status, 1)
@@ -103,6 +107,7 @@ class ListeningPopup(QWidget):
         self.cancel_button.clicked.connect(self.cancel_clicked)
         self.paste_button.clicked.connect(self.paste_clicked)
         self.copy_button.clicked.connect(lambda: self.copy_clicked.emit(self.text.toPlainText()))
+        self.edit_button.clicked.connect(self._request_edit)
         self.close_button.clicked.connect(self.hide)
         self.auto_paste.toggled.connect(self.auto_paste_toggled)
 
@@ -158,6 +163,7 @@ class ListeningPopup(QWidget):
         self.status.setText("✓ Yazıldı" if outcome.pasted else ("Metin hazır" if outcome.text else "Yazılacak metin yok"))
         self.status.setStyleSheet("color: #27ae60;" if outcome.pasted else "color: #f39c12;")
         self._show_buttons(listening=False)
+        self.edit_button.setEnabled(bool(outcome.text))
         self.copy_button.setEnabled(bool(outcome.text))
         self.paste_button.setEnabled(bool(outcome.text))
         self.paste_button.setText("Yeniden yapıştır" if outcome.pasted else "Yapıştır")
@@ -179,6 +185,7 @@ class ListeningPopup(QWidget):
         self.status.setText("Bilgi")
         self.status.setStyleSheet("color: #f39c12;")
         self._show_buttons(listening=False)
+        self.edit_button.setEnabled(False)
         self.copy_button.setEnabled(False)
         self.paste_button.setEnabled(False)
         self.show()
@@ -188,6 +195,16 @@ class ListeningPopup(QWidget):
         self.note.setText("Panoya kopyalandı.")
 
     # ------------------------------------------------------------ iç işler
+
+    def _request_edit(self) -> None:
+        if self.edit_button.isVisible() and self.edit_button.isEnabled():
+            self.edit_requested.emit(self.text.toPlainText())
+
+    def eventFilter(self, watched, event) -> bool:  # noqa: N802 — Qt'nin yöntem adı
+        # Metin alanına tıklanınca düzenleme penceresi açılır (bu pencere odak alamadığı için).
+        if watched is self.text.viewport() and event.type() == QEvent.Type.MouseButtonRelease:
+            self._request_edit()
+        return super().eventFilter(watched, event)
 
     def _show_buttons(self, listening: bool) -> None:
         for button in self._listening_buttons:

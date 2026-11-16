@@ -44,12 +44,16 @@ def state_icon(state: State) -> QIcon:
 
 class Tray(QObject):
     show_window_clicked = Signal()
+    listen_clicked = Signal()
     quit_clicked = Signal()
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._icon = QSystemTrayIcon(state_icon(State.LOADING), self)
         self._menu = QMenu()
+        self._listen_action = QAction("Dinlemeyi başlat", self._menu)
+        self._listen_action.triggered.connect(self.listen_clicked)
+        self._menu.addAction(self._listen_action)
         show_action = QAction("Pencereyi göster", self._menu)
         quit_action = QAction("Çık", self._menu)
         show_action.triggered.connect(self.show_window_clicked)
@@ -64,6 +68,8 @@ class Tray(QObject):
     def set_state(self, state: State) -> None:
         self._icon.setIcon(state_icon(state))
         self._icon.setToolTip(f"{APP_NAME}: {state.value}")
+        self._listen_action.setText("Bitir" if state in (State.LISTENING, State.PAUSED) else "Dinlemeyi başlat")
+        self._listen_action.setEnabled(state in (State.IDLE, State.LISTENING, State.PAUSED))
 
     def hide(self) -> None:
         self._icon.hide()

@@ -135,6 +135,12 @@ class Controller(QObject):
             self._set_state(State.IDLE)
             self.notice.emit("İptal edildi; hiçbir şey yazılmadı.")
 
+    def paste_text(self, text: str) -> None:
+        """Düzenlenmiş metni imlecin olduğu yere yazar ve son metin olarak saklar."""
+        if text.strip():
+            self.last_text = text
+            self.paste_last()
+
     def paste_last(self) -> None:
         """Son metni imlecin olduğu yere yazar (otomatik yapıştırma kapalıyken ya da yeniden)."""
         if self.last_text:

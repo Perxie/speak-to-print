@@ -15,7 +15,7 @@ onlar listede yok. `~/.cache` ise adına rağmen diskte durur ve kendiliğinden 
 | Kickoff menü kaydı ve portal uygulama kimliği | `~/.local/share/applications/io.github.perxie.SpeakToPrint.desktop` | küçük | dosyayı silin (uygulama her açılışta yeniden yazar) |
 | KDE'de bu uygulamaya atanmış global kısayol (Shift+Pause) | KDE Sistem Ayarları → Klavye → Kısayollar → "Speak to Print" (`~/.config/kglobalshortcutsrc`) | küçük | Sistem Ayarları'ndan kısayolu kaldırın |
 | kwin-type programı (metni pencereye yazar) | `~/.local/bin/kwin-type` | 22 KB | dosyayı silin |
-| Dinleme penceresi için KWin pencere kuralı | `~/.config/kwinrulesrc` içindeki `speak-to-print-dinleme` bölümü (dosyanın ilk hâli: `kwinrulesrc.speak-to-print.yedek`, boştu) | küçük | `uv run python spikes/popup_check.py --remove-rule`, sonra yedek dosyası silinebilir |
+| Dinleme ve düzenleme pencereleri için KWin pencere kuralları | `~/.config/kwinrulesrc` içindeki `speak-to-print-dinleme` ve `speak-to-print-duzenleme` bölümleri (dosyanın ilk hâli: `kwinrulesrc.speak-to-print.yedek`, boştu) | küçük | Sistem Ayarları → Pencere Yönetimi → Pencere Kuralları'ndan iki kuralı silin (uygulama her açılışta yeniden yazar); sonra yedek dosyası silinebilir |
 | Uygulamanın ayarları (otomatik yapıştırma, noktalama ipucu) | `~/.config/speak-to-print/speak-to-print.conf` | küçük | klasörü silin |
 | Uygulamanın günlüğü (durumlar ve süreler; dikte edilen metin yazılmaz) | `~/.local/state/speak-to-print/speak-to-print.log` (en çok 2 × 512 KB) | küçük | klasörü silin |
 | uv'nin kurduğu Python 3.14 (`.venv` bunu kullanır) | `~/.local/share/uv/python/` ve `~/.local/bin/python3.14` bağlantısı | 117 MB | `uv python uninstall 3.14` |

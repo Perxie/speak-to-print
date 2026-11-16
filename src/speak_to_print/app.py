@@ -7,6 +7,7 @@ import logging
 import logging.handlers
 import os
 import sys
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -17,13 +18,15 @@ from PySide6.QtWidgets import QApplication
 
 from . import desktop_entry, kwin_rules
 from .audio import Recorder
-from .config import POPUP_BOTTOM_MARGIN, POPUP_SIZE, POPUP_TITLE, SHORTCUT_DESCRIPTION, SHORTCUT_ID
+from .config import (EDITOR_GAP, EDITOR_SIZE, EDITOR_TITLE, POPUP_BOTTOM_MARGIN, POPUP_SIZE, POPUP_TITLE,
+                     SHORTCUT_DESCRIPTION, SHORTCUT_ID)
 from .controller import Controller, Outcome, State
 from .hotkey import PortalHotkeys, Shortcut
 from .output import OutputError, clipboard_paste
 from .output.writer import TextWriter
 from .settings import Settings
 from .transcriber import Transcriber, Transcript
+from .ui.editor_window import EditorWindow
 from .ui.listening_popup import ListeningPopup
 from .ui.main_window import MainWindow
 from .ui.tray import Tray
@@ -83,6 +86,10 @@ def _prepare_system_integration() -> None:
         x, y = _popup_position()
         if kwin_rules.ensure_popup_rule(desktop_entry.APP_ID, POPUP_TITLE, x, y):
             log.info("KWin pencere kuralı güncellendi (konum %d,%d).", x, y)
+        # Düzenleme penceresi dinleme penceresinin hemen üstünde durur.
+        editor_y = y - EDITOR_SIZE[1] - EDITOR_GAP
+        if kwin_rules.ensure_editor_rule(desktop_entry.APP_ID, EDITOR_TITLE, x, editor_y):
+            log.info("KWin düzenleme penceresi kuralı güncellendi (konum %d,%d).", x, editor_y)
     except (OSError, RuntimeError) as error:
         log.warning("KWin pencere kuralı yazılamadı: %s", error)
 
@@ -98,10 +105,14 @@ class Application(QObject):
         self,
         settings: Settings | None = None,
         write_text: Callable[[str], str] | None = None,
-        is_app_active: Callable[[], bool] | None = None,
+        app_has_focus: Callable[[], bool] | None = None,
         on_quit: Callable[[], None] | None = None,
     ) -> None:
         super().__init__()
+        # "Pencerelerimizden biri klavye odağında mı?" sorusu.
+        self._app_has_focus = app_has_focus or (
+            lambda: QGuiApplication.applicationState() == Qt.ApplicationState.ApplicationActive)
+        self.editor = EditorWindow()
         self._on_quit = on_quit or (lambda: None)
         self._quitting = False
         self._writer = TextWriter() if write_text is None else None
@@ -112,8 +123,14 @@ class Application(QObject):
             self.recorder, self.transcriber,
             write_text or self._writer.write,  # type: ignore[union-attr]
             self.settings,
-            is_app_active or (lambda: QGuiApplication.applicationState() == Qt.ApplicationState.ApplicationActive),
+            # Düzenleme penceresi odaktaysa yazmak serbesttir: dikte, düzenlenen metnin içine girer.
+            is_app_active=lambda: self._app_has_focus() and not self.editor.isActiveWindow(),
         )
+        self._pending_paste = ""
+        self._focus_wait_started = 0.0
+        self._focus_timer = QTimer(self)  # düzenleyiciden yapıştırırken odağın geri dönmesini bekler
+        self._focus_timer.setInterval(40)
+        self._focus_timer.timeout.connect(self._paste_when_focus_released)
         self.window = MainWindow()
         self.popup = ListeningPopup(seconds_recorded=lambda: self.recorder.seconds)
         self.tray = Tray()
@@ -137,12 +154,19 @@ class Application(QObject):
         self.popup.paste_clicked.connect(self.controller.paste_last)
         self.popup.copy_clicked.connect(self._copy)
         self.popup.auto_paste_toggled.connect(self._set_auto_paste)
+        self.popup.edit_requested.connect(self._open_editor)
+
+        self.editor.copy_clicked.connect(self._copy)
+        self.editor.paste_clicked.connect(self._paste_from_editor)
+        self.editor.text_edited.connect(self._on_text_edited)
 
         self.window.copy_clicked.connect(self._copy)
         self.window.auto_paste_toggled.connect(self._set_auto_paste)
         self.window.use_prompt_toggled.connect(self._set_use_prompt)
         self.window.configure_shortcut_clicked.connect(self.hotkeys.configure)
+        self.window.listen_clicked.connect(lambda: self._toggle_from("ana pencere"))
         self.window.closed.connect(self.shutdown)
+        self.tray.listen_clicked.connect(lambda: self._toggle_from("tepsi menüsü"))
         self.tray.show_window_clicked.connect(self.show_window)
         self.tray.quit_clicked.connect(self.window.close)
 
@@ -181,10 +205,51 @@ class Application(QObject):
             clipboard_paste.copy_text(text)
             log.info("Metin panoya kopyalandı (%d karakter).", len(text))
             self.popup.show_copied()
+            self.editor.show_note("Panoya kopyalandı.")
             self.window.show_notice("Panoya kopyalandı.")
         except OutputError as error:
             log.warning("Kopyalanamadı: %s", error)
             self.window.show_notice(str(error))
+
+    def _toggle_from(self, source: str) -> None:
+        log.info("Dinleme düğmesi: %s (durum: %s).", source, self.controller.state.name)
+        self.controller.toggle()
+
+    # ------------------------------------------------------------ düzenleme penceresi
+
+    def _open_editor(self, text: str) -> None:
+        log.info("Düzenleme penceresi açıldı (%d karakter).", len(text))
+        self.popup.hide()
+        self.editor.open_with(text)
+
+    def _on_text_edited(self, text: str) -> None:
+        self.controller.last_text = text
+        self.window.set_last_text(text)
+
+    def _paste_from_editor(self, text: str) -> None:
+        """Düzenleme penceresini kapatır; odak önceki uygulamaya dönünce metni oraya yazar."""
+        if not text.strip():
+            return
+        self._pending_paste = text
+        self._focus_wait_started = time.monotonic()
+        self.editor.hide()
+        self._focus_timer.start()
+
+    def _paste_when_focus_released(self) -> None:
+        waited = time.monotonic() - self._focus_wait_started
+        released = not self._app_has_focus()
+        if not released and waited < 1.5:
+            return
+        self._focus_timer.stop()
+        text, self._pending_paste = self._pending_paste, ""
+        if released:
+            log.info("Düzenleyiciden yapıştır: odak %.0f ms'de önceki pencereye döndü.", waited * 1000)
+            # Önceki pencere klavyeyi almaya hazır olsun diye kısa bir pay bırak.
+            QTimer.singleShot(120, lambda: self.controller.paste_text(text))
+        else:
+            log.info("Düzenleyiciden yapıştır: odak %.0f ms içinde başka pencereye geçmedi; yazılmadı.", waited * 1000)
+            self.editor.open_with(text)
+            self.editor.show_note("Yazılacak pencere bulunamadı. Kopyala'yı kullanın.")
 
     def show_window(self) -> None:
         self.window.showNormal()
@@ -249,7 +314,9 @@ class Application(QObject):
         log.info("Kapanıyor.")
         self.hotkeys.stop()
         self.recorder.cancel()
+        self._focus_timer.stop()
         self.popup.hide()
+        self.editor.hide()
         self.tray.hide()
         if self._writer is not None:
             self._writer.close()
