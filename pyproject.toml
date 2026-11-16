@@ -7,6 +7,7 @@ dependencies = [
     # PyAV 19, faster-whisper 1.2.1'in kullandığı `metadata_errors` parametresini kaldırdı.
     # faster-whisper'ın geliştirme kodunda düzeltildi; yeni sürümü çıkınca bu sınır kalkabilir.
     "av>=18,<19",
+    "dbus-fast>=5.2.0",
     "faster-whisper>=1.2.1",
     "nvidia-cublas-cu12>=12,<13",
     "pyside6-addons>=6.12.0",

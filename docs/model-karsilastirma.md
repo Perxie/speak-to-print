@@ -9,8 +9,9 @@ Yeniden üretmek için: `uv run python spikes/model_compare.py`.
 ## Karar
 
 **Varsayılan model `whisper-large-v3`** (faster-whisper, `float16`, `language="tr"`). Kullanıcı seçti.
-`large-v3-turbo` ayarlardan seçilebilir ikinci model olarak kalır. Uygulama karışık dil hedefiyle
-devam eder; "yalnızca Türkçe" kipine ve Qwen3-ASR denemesine gerek kalmadı.
+`large-v3-turbo` tutulmadı: kullanıcı, daha başarısız olduğu için ikinci seçenek olarak da istemedi
+(model silindi). Ekran kartı yükü önemli değil; ileride yalnızca **daha iyi** bir model çıkarsa eklenir.
+Uygulama karışık dil hedefiyle devam eder; "yalnızca Türkçe" kipine ve Qwen3-ASR denemesine gerek kalmadı.
 
 ## Özet tablo
 

@@ -19,7 +19,7 @@ modelle ve üç ayarla yazıya çevirir, beklenen metinle karşılaştırır:
 
 Çalıştırma (proje klasöründe):
   uv run python spikes/model_compare.py
-  uv run python spikes/model_compare.py --models large-v3 large-v3-turbo
+  uv run python spikes/model_compare.py --models large-v3 large-v3-turbo   # turbo'yu yeniden indirir
 
 Rapor: recordings/set/report.md (git'e girmez).
 """
@@ -47,8 +47,9 @@ DEFAULT_SET_DIR = ROOT / "recordings" / "set"
 # Aday modeller: ad → faster-whisper model adı ya da yerel klasör.
 MODELS: dict[str, str] = {
     "large-v3": "large-v3",
+    # Aşağıdaki ikisi elendi ve silindi (docs/model-karsilastirma.md). Varsayılan çalıştırmada
+    # yer almazlar; --models ile istenirse turbo yeniden indirilir, buzzasr klasörü yoksa atlanır.
     "large-v3-turbo": "large-v3-turbo",
-    # Elendi ve silindi (docs/model-karsilastirma.md). Klasör yoksa betik bu modeli atlar.
     "buzzasr-turkish": str(ROOT / "models" / "buzzasr-turkish-ct2"),
 }
 
@@ -156,7 +157,7 @@ def transcribe(model, audio: np.ndarray, **options) -> Output:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Aday modelleri kullanıcının kayıtlarıyla karşılaştırır.")
     parser.add_argument("--set-dir", type=Path, default=DEFAULT_SET_DIR)
-    parser.add_argument("--models", nargs="+", default=list(MODELS), choices=list(MODELS))
+    parser.add_argument("--models", nargs="+", default=["large-v3"], choices=list(MODELS))
     args = parser.parse_args()
 
     manifest_path = args.set_dir / "manifest.json"

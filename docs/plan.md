@@ -2,7 +2,7 @@
 
 > **Durum:** Kullanıcı bu planı 15 Kasım 2026'da onayladı. Metindeki "onaylanana kadar kod yazılmaz" ifadesi artık geçerli değil. İlerleme için `PROGRESS.md`'ye bakın.
 >
-> **Denemelerle değişenler** (güncel hâli `CLAUDE.md`'de): Faz 0.2'de cuDNN'in gerekmediği görüldü (yalnızca `nvidia-cublas-cu12`), PyAV 19'dan küçük sürüme sabitlendi. Faz 0.3'te bağımlılık `pyside6-addons` oldu (WebEngine'siz); Qt mikrofon adlarını KDE'den farklı gösterebiliyor (ör. "BTD 700 Mono"). Faz 0.4'te large-v3 seçildi, BuzzASR elendi, Qwen3-ASR denenmedi (`docs/model-karsilastirma.md`).
+> **Denemelerle değişenler** (güncel hâli `CLAUDE.md`'de): Faz 0.2'de cuDNN'in gerekmediği görüldü (yalnızca `nvidia-cublas-cu12`), PyAV 19'dan küçük sürüme sabitlendi. Faz 0.3'te bağımlılık `pyside6-addons` oldu (WebEngine'siz); Qt mikrofon adlarını KDE'den farklı gösterebiliyor (ör. "BTD 700 Mono"). Faz 0.4'te large-v3 seçildi, BuzzASR elendi, Qwen3-ASR denenmedi (`docs/model-karsilastirma.md`). Sonradan turbo da çıkarıldı: tek model large-v3, ayarlarda model seçimi yok. Faz 0.5'te portal kısayolu basılı tutmayı da destekledi; uygulama kimliği `io.github.perxie.SpeakToPrint`.
 
 ## İnceleme sonucu (ikinci model, 15 Kasım 2026)
 
