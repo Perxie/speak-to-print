@@ -32,6 +32,21 @@ def _normalize(text: str) -> str:
 _KNOWN = {_normalize(phrase) for phrase in KNOWN_PHRASES}
 
 
+def is_prompt_echo(text: str, prompt: str) -> bool:
+    """Model, kendisine verilen ipucu metnini mi geri söylüyor?
+
+    Kısık seste Whisper bazen ipucundaki cümleleri (karıştırarak) çıktı diye
+    verir. Çıktıdaki kelimelerin neredeyse tamamı ipucunda geçiyorsa bunu
+    yankı sayarız. Kısa çıktılar (5 kelimeden az) bu yolla değerlendirilmez;
+    gerçek bir cümle ipucuyla birkaç kelimeyi tesadüfen paylaşabilir.
+    """
+    words = _normalize(text).split()
+    if len(words) < 5 or not prompt:
+        return False
+    known = set(_normalize(prompt).split())
+    return sum(word in known for word in words) / len(words) >= 0.9
+
+
 def is_invented(text: str) -> bool:
     """Metnin tamamı bilinen bir uydurma kalıbı mı?"""
     normalized = _normalize(text)

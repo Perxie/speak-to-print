@@ -30,6 +30,7 @@ from .transcriber import Transcriber, Transcript
 from .ui.editor_window import EditorWindow
 from .ui.listening_popup import ListeningPopup
 from .ui.main_window import MainWindow
+from .ui.settings_dialog import SettingsDialog
 from .ui.tray import Tray
 
 log = logging.getLogger("speak_to_print")
@@ -118,8 +119,8 @@ class Application(QObject):
         self.history = history or History()
         self._on_quit = on_quit or (lambda: None)
         self._quitting = False
-        self._writer = TextWriter() if write_text is None else None
         self.settings = settings or Settings()
+        self._writer = TextWriter(lambda: self.settings.output_method) if write_text is None else None
         self.recorder = Recorder()
         self.transcriber = Transcriber()
         self.controller = Controller(
@@ -135,6 +136,7 @@ class Application(QObject):
         self._focus_timer.setInterval(40)
         self._focus_timer.timeout.connect(self._paste_when_focus_released)
         self.window = MainWindow()
+        self.settings_dialog = SettingsDialog(self.settings)
         self.popup = ListeningPopup(seconds_recorded=lambda: self.recorder.seconds)
         self.tray = Tray()
         self.hotkeys = PortalHotkeys(desktop_entry.APP_ID, [Shortcut(SHORTCUT_ID, SHORTCUT_DESCRIPTION)])
@@ -149,6 +151,7 @@ class Application(QObject):
         self.controller.outcome.connect(self._on_outcome)
         self.controller.notice.connect(self._on_notice)
         self.recorder.level.connect(self.popup.set_level)
+        self.recorder.notice.connect(self._on_notice)
         self.transcriber.ready.connect(self._on_model_ready)
         self.transcriber.done.connect(self._on_transcript)
 
@@ -171,8 +174,9 @@ class Application(QObject):
         self.window.delete_clicked.connect(self._delete_history)
         self.window.clear_clicked.connect(self._clear_history)
         self.window.auto_paste_toggled.connect(self._set_auto_paste)
-        self.window.use_prompt_toggled.connect(self._set_use_prompt)
         self.window.configure_shortcut_clicked.connect(self.hotkeys.configure)
+        self.window.settings_clicked.connect(self.settings_dialog.open)
+        self.settings_dialog.configure_shortcut_clicked.connect(self.hotkeys.configure)
         self.window.listen_clicked.connect(lambda: self._toggle_from("ana pencere"))
         self.window.closed.connect(self.shutdown)
         self.tray.listen_clicked.connect(lambda: self._toggle_from("tepsi menüsü"))
@@ -180,6 +184,7 @@ class Application(QObject):
         self.tray.quit_clicked.connect(self.window.close)
 
         self.hotkeys.activated.connect(self._on_shortcut)
+        self.hotkeys.deactivated.connect(self._on_shortcut_released)
         self.hotkeys.bound.connect(self._on_bound)
         self.hotkeys.failed.connect(self._on_shortcut_failed)
         self.server.newConnection.connect(self._on_new_instance)
@@ -196,16 +201,22 @@ class Application(QObject):
     # ------------------------------------------------------------ olaylar
 
     def _sync_options(self) -> None:
-        self.window.set_options(self.settings.auto_paste, self.settings.use_prompt)
+        """Ayarlar değişince ilgili parçaları günceller."""
+        hold_mode = self.settings.hotkey_mode == "hold"
+        self.window.set_options(self.settings.auto_paste, hold_mode)
         self.popup.set_auto_paste(self.settings.auto_paste)
+        self.popup.set_hold_mode(hold_mode)
+        self.recorder.preferred_device_id = self.settings.microphone_id
+        summary = (f"otomatik yapıştırma={self.settings.auto_paste}, ipucu={self.settings.use_prompt}, "
+                   f"kısayol kipi={self.settings.hotkey_mode}, yazma={self.settings.output_method}, "
+                   f"mikrofon={'seçili' if self.settings.microphone_id else 'varsayılan'}, "
+                   f"sözlük={len(self.settings.vocabulary)} terim, geçmiş={self.settings.keep_history}")
+        if summary != getattr(self, "_last_summary", ""):
+            self._last_summary = summary
+            log.info("Ayarlar: %s", summary)
 
     def _set_auto_paste(self, enabled: bool) -> None:
         self.settings.auto_paste = enabled
-        log.info("Otomatik yapıştırma: %s", "açık" if enabled else "kapalı")
-
-    def _set_use_prompt(self, enabled: bool) -> None:
-        self.settings.use_prompt = enabled
-        log.info("Noktalama ipucu: %s", "açık" if enabled else "kapalı")
 
     def _copy(self, text: str) -> None:
         if not text:
@@ -241,6 +252,8 @@ class Application(QObject):
     # ------------------------------------------------------------ geçmiş
 
     def _remember(self, text: str) -> None:
+        if not self.settings.keep_history:
+            return
         entry = self.history.add(text)
         if entry is not None:
             log.info("Geçmişe eklendi (%d karakter).", len(entry.text))
@@ -285,9 +298,19 @@ class Application(QObject):
         self.window.activateWindow()
 
     def _on_shortcut(self, shortcut_id: str) -> None:
-        if shortcut_id == SHORTCUT_ID:
-            log.info("Kısayola basıldı (durum: %s).", self.controller.state.name)
+        if shortcut_id != SHORTCUT_ID:
+            return
+        log.info("Kısayola basıldı (durum: %s, kip: %s).", self.controller.state.name, self.settings.hotkey_mode)
+        if self.settings.hotkey_mode == "hold":
+            self.controller.start_listening()
+        else:
             self.controller.toggle()
+
+    def _on_shortcut_released(self, shortcut_id: str) -> None:
+        # "Basılı tut" kipinde tuşu bırakmak dinlemeyi bitirir.
+        if shortcut_id == SHORTCUT_ID and self.settings.hotkey_mode == "hold":
+            log.info("Kısayol bırakıldı (durum: %s).", self.controller.state.name)
+            self.controller.finish()
 
     def _on_state(self, state: State) -> None:
         if state is State.LISTENING and self.recorder.device_name:
@@ -324,6 +347,7 @@ class Application(QObject):
         trigger = triggers.get(SHORTCUT_ID, "")
         log.info("Kısayol: %s", trigger or "(atanmamış)")
         self.window.set_shortcut(trigger)
+        self.settings_dialog.set_shortcut(trigger)
 
     def _on_shortcut_failed(self, message: str) -> None:
         log.error("Kısayol hatası: %s", message)
@@ -347,6 +371,7 @@ class Application(QObject):
         self._focus_timer.stop()
         self.popup.hide()
         self.editor.hide()
+        self.settings_dialog.hide()
         self.tray.hide()
         if self._writer is not None:
             self._writer.close()

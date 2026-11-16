@@ -16,7 +16,11 @@ from .config import SAMPLE_RATE, STOP_TAIL_MS
 
 def is_monitor(device: QAudioDevice) -> bool:
     """Hoparlöre giden sesin kopyası olan 'monitor' kaynakları mikrofon değildir."""
-    return bytes(device.id().data()).decode(errors="replace").endswith(".monitor")
+    return device_id(device).endswith(".monitor")
+
+
+def device_id(device: QAudioDevice) -> str:
+    return bytes(device.id().data()).decode(errors="replace")
 
 
 def default_microphone() -> QAudioDevice | None:
@@ -24,10 +28,28 @@ def default_microphone() -> QAudioDevice | None:
     return None if device.isNull() or is_monitor(device) else device
 
 
+def microphones() -> list[QAudioDevice]:
+    """Bağlı mikrofonlar (monitor kaynakları hariç)."""
+    return [device for device in QMediaDevices.audioInputs() if not is_monitor(device)]
+
+
+def choose_microphone(preferred_id: str, available: dict[str, object], default: object | None) -> tuple[object | None, bool]:
+    """Kullanılacak mikrofonu seçer: (aygıt, seçili olan bulunamadığı için varsayılana mı düşüldü).
+
+    `preferred_id` boşsa sistem varsayılanı kullanılır.
+    """
+    if not preferred_id:
+        return default, False
+    if preferred_id in available:
+        return available[preferred_id], False
+    return default, True
+
+
 class Recorder(QObject):
     """Sistemin varsayılan mikrofonundan 16 kHz mono kayıt alır."""
 
     level = Signal(float)  # son ses paketinin tepe seviyesi, 0..1
+    notice = Signal(str)  # kullanıcıya gösterilecek kısa bilgi
     finished = Signal(object)  # kayıt bitti: float32 numpy dizisi (-1..1)
     failed = Signal(str)
 
@@ -39,6 +61,7 @@ class Recorder(QObject):
         self._paused = False
         self._stopping = False
         self.device_name = ""
+        self.preferred_device_id = ""  # boş: sistem varsayılanı (ayarlardan gelir)
 
     @property
     def is_recording(self) -> bool:
@@ -52,7 +75,10 @@ class Recorder(QObject):
     def start(self) -> bool:
         if self._source is not None:
             return True
-        device = default_microphone()
+        device, fell_back = choose_microphone(
+            self.preferred_device_id, {device_id(mic): mic for mic in microphones()}, default_microphone())
+        if fell_back and device is not None:
+            self.notice.emit("Seçili mikrofon bağlı değil; sistemin varsayılan mikrofonu kullanılıyor.")
         if device is None:
             self.failed.emit("Mikrofon bulunamadı. KDE'nin ses ayarlarından bir giriş aygıtı seçin.")
             return False

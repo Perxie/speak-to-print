@@ -47,6 +47,7 @@ class ListeningPopup(QWidget):
         self._seconds_recorded = seconds_recorded
         self._state = State.IDLE
         self._heard_sound = False
+        self._hold_mode = False
 
         self.setObjectName("popup")
         self.setWindowTitle(POPUP_TITLE)
@@ -134,6 +135,10 @@ class ListeningPopup(QWidget):
             self.auto_paste.setChecked(enabled)
             self.auto_paste.blockSignals(False)
 
+    def set_hold_mode(self, enabled: bool) -> None:
+        """"Basılı tut" kipinde tuşu bırakmak bitirir; Beklet ve Bitir düğmeleri gizlenir."""
+        self._hold_mode = enabled
+
     def set_state(self, state: State) -> None:
         self._state = state
         if state is State.LISTENING:
@@ -215,7 +220,8 @@ class ListeningPopup(QWidget):
 
     def _show_buttons(self, listening: bool) -> None:
         for button in self._listening_buttons:
-            button.setVisible(listening)
+            hidden_in_hold_mode = self._hold_mode and button is not self.cancel_button
+            button.setVisible(listening and not hidden_in_hold_mode)
             button.setEnabled(True)
         for button in self._result_buttons:
             button.setVisible(not listening)

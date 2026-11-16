@@ -51,13 +51,15 @@ class FakeTranscriber(QObject):
     def load(self):
         self.requests.append("load")
 
-    def transcribe(self, samples, use_prompt):
+    def transcribe(self, samples, use_prompt, vocabulary):
         self.requests.append(("transcribe", len(samples), use_prompt))
+        self.vocabulary = vocabulary
 
 
 class FakeSettings:
     auto_paste = True
     use_prompt = True
+    vocabulary: list = []
 
 
 class Harness:
@@ -256,3 +258,33 @@ def test_paste_text_ignores_blank_text(h):
     h.ready()
     h.controller.paste_text("   ")
     assert h.written == [] and h.outcomes == []
+
+
+def test_vocabulary_is_passed_to_transcriber(h):
+    h.settings.vocabulary = ["commit", "pull request"]
+    h.ready()
+    h.controller.toggle()
+    h.controller.toggle()
+    h.recorder.finished.emit(ONE_SECOND)
+    assert h.transcriber.vocabulary == ["commit", "pull request"]
+
+
+def test_start_listening_never_stops(h):
+    """"Basılı tut" kipi: basınca başlar, tuş tekrarı gelse de durmaz; bırakınca finish çağrılır."""
+    h.ready()
+    h.controller.start_listening()
+    h.controller.start_listening()
+    assert h.controller.state is State.LISTENING and h.recorder.calls == ["start"]
+    h.controller.finish()
+    assert h.controller.state is State.TRANSCRIBING
+
+
+def test_start_listening_while_loading_only_notifies(h):
+    h.controller.start_listening()
+    assert h.recorder.calls == [] and "yükleniyor" in h.notices[-1]
+
+
+def test_chosen_clipboard_method_note(h):
+    h.method = "pano-seçili"
+    h.ready().dictate("Panoyla.")
+    assert h.outcomes[-1].pasted and h.outcomes[-1].note == "Yazıldı (pano)."

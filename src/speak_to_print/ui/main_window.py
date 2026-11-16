@@ -25,13 +25,13 @@ def _summary(entry: Entry) -> str:
 
 class MainWindow(QWidget):
     configure_shortcut_clicked = Signal()
+    settings_clicked = Signal()
     listen_clicked = Signal()
     copy_clicked = Signal(str)
     edit_clicked = Signal(str)  # seçili metni düzenleme penceresinde aç
     delete_clicked = Signal(int)  # geçmiş kaydının kimliği
     clear_clicked = Signal()
     auto_paste_toggled = Signal(bool)
-    use_prompt_toggled = Signal(bool)
     closed = Signal()
 
     def __init__(self) -> None:
@@ -40,6 +40,7 @@ class MainWindow(QWidget):
         self.resize(620, 600)
         self._trigger = ""
         self._model_info = ""
+        self._hold_mode = False
 
         self.status = QLabel("Model yükleniyor…")
         self.status.setStyleSheet("font-size: 15pt; font-weight: bold; padding: 4px;")
@@ -53,10 +54,9 @@ class MainWindow(QWidget):
         self.shortcut = QLabel("Kısayol: bekleniyor…")
         self.shortcut_button = QPushButton("Kısayolu ayarla…")
         self.shortcut_button.setEnabled(False)
+        self.settings_button = QPushButton("Ayarlar…")
 
         self.auto_paste = QCheckBox("Otomatik yapıştır: çevrilen metni imlecin olduğu yere kendiliğinden yaz")
-        self.use_prompt = QCheckBox("Noktalama ipucu: modele noktalı bir örnek metin ver")
-        self.use_prompt.setToolTip("Açıkken noktalama ve büyük harf daha tutarlı olur; nadiren bir kelimeyi değiştirebilir.")
 
         self.history = QListWidget()
         self.history.setToolTip("Son dikteleriniz. Yalnızca bu bilgisayarda saklanır.")
@@ -75,6 +75,7 @@ class MainWindow(QWidget):
         shortcut_row = QHBoxLayout()
         shortcut_row.addWidget(self.shortcut, 1)
         shortcut_row.addWidget(self.shortcut_button)
+        shortcut_row.addWidget(self.settings_button)
         bottom = QHBoxLayout()
         for button in (self.copy_button, self.edit_button, self.delete_button):
             bottom.addWidget(button)
@@ -87,13 +88,13 @@ class MainWindow(QWidget):
         layout.addWidget(self.detail)
         layout.addLayout(shortcut_row)
         layout.addWidget(self.auto_paste)
-        layout.addWidget(self.use_prompt)
         layout.addWidget(QLabel("Geçmiş:"))
         layout.addWidget(self.history, 1)
         layout.addWidget(self.preview)
         layout.addLayout(bottom)
 
         self.shortcut_button.clicked.connect(self.configure_shortcut_clicked)
+        self.settings_button.clicked.connect(self.settings_clicked)
         self.listen_button.clicked.connect(self.listen_clicked)
         self.history.currentItemChanged.connect(self._on_selection_changed)
         self.history.itemDoubleClicked.connect(lambda _item: self._edit_selected())
@@ -103,17 +104,18 @@ class MainWindow(QWidget):
         self.clear_button.clicked.connect(self._confirm_clear)
         self.quit_button.clicked.connect(self.close)
         self.auto_paste.toggled.connect(self.auto_paste_toggled)
-        self.use_prompt.toggled.connect(self.use_prompt_toggled)
         self._on_selection_changed()
 
     # ------------------------------------------------------------ ayarlar ve durum
 
-    def set_options(self, auto_paste: bool, use_prompt: bool) -> None:
-        for box, value in ((self.auto_paste, auto_paste), (self.use_prompt, use_prompt)):
-            if box.isChecked() != value:
-                box.blockSignals(True)
-                box.setChecked(value)
-                box.blockSignals(False)
+    def set_options(self, auto_paste: bool, hold_mode: bool) -> None:
+        if self.auto_paste.isChecked() != auto_paste:
+            self.auto_paste.blockSignals(True)
+            self.auto_paste.setChecked(auto_paste)
+            self.auto_paste.blockSignals(False)
+        if self._hold_mode != hold_mode:
+            self._hold_mode = hold_mode
+            self._show_hint()
 
     def set_state(self, state: State, failure: str = "") -> None:
         self.status.setText({State.LOADING: "Model yükleniyor…", State.IDLE: "Hazır",
@@ -126,7 +128,8 @@ class MainWindow(QWidget):
         elif state is State.IDLE:
             self._show_hint()
         elif state is State.LISTENING:
-            self.detail.setText("Konuşun. Bitirmek için kısayola ya da Bitir'e basın.")
+            self.detail.setText("Konuşun. Bitirmek için tuşu bırakın." if self._hold_mode
+                                else "Konuşun. Bitirmek için kısayola ya da Bitir'e basın.")
 
     def set_model_info(self, seconds: float, device: str) -> None:
         self._model_info = f"Model {seconds:.1f} sn'de yüklendi ({'ekran kartı' if device == 'cuda' else device})."
@@ -207,7 +210,8 @@ class MainWindow(QWidget):
 
     def _show_hint(self) -> None:
         if self._trigger:
-            self.detail.setText(f"{self._model_info} Başka bir uygulamada yazı alanına tıklayın ve {self._trigger} tuşuna basın.".strip())
+            action = "tuşunu basılı tutup konuşun" if self._hold_mode else "tuşuna basın"
+            self.detail.setText(f"{self._model_info} Başka bir uygulamada yazı alanına tıklayın ve {self._trigger} {action}.".strip())
         elif self._model_info:
             self.detail.setText(self._model_info)
 

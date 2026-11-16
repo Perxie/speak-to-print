@@ -22,7 +22,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `src/speak_to_print/app.py`: giriş noktası; parçaları oluşturup bağlar, tek kopya denetimi yapar, açılışta Kickoff kaydını ve KWin kuralını günceller.
 - `src/speak_to_print/controller.py`: durum makinesi (`State`, `Outcome`); bağımlılıkları dışarıdan alır, `tests/test_controller.py` sahte nesnelerle sınar. Yeni davranış eklerken önce buraya ve teste bak.
 - `src/speak_to_print/audio.py` (`Recorder`), `transcriber.py` (`Transcriber`, ayrı QThread), `textguard.py` (uydurma metin kalıpları), `settings.py` (QSettings), `history.py` (`History`: SQLite geçmişi, `~/.local/share/speak-to-print/history.db`), `config.py` (sabitler; `POPUP_TITLE`/`POPUP_SIZE` KWin kuralıyla eşleşmek zorunda).
-- `src/speak_to_print/ui/`: `listening_popup.py` (odak almayan, sabit boyutlu küçük pencere), `editor_window.py` (odak alan düzenleme penceresi; küçük pencerenin üstünde açılır), `main_window.py`, `tray.py`.
+- `src/speak_to_print/ui/`: `listening_popup.py` (odak almayan, sabit boyutlu küçük pencere), `editor_window.py` (odak alan düzenleme penceresi; küçük pencerenin üstünde açılır), `main_window.py`, `tray.py`, `settings_dialog.py` (ayarlar; değişiklikler anında `Settings`'e yazılır).
 - `src/speak_to_print/hotkey.py`: `PortalHotkeys` (QObject), XDG GlobalShortcuts portalını ayrı bir asyncio iş parçacığında dinler; `activated`/`deactivated`/`bound`/`failed` Qt sinyalleri verir.
 - `src/speak_to_print/desktop_entry.py`: `APP_ID` (`io.github.perxie.SpeakToPrint`) ve Kickoff kaydını yazan `install()`. Portal, kimliği bu `.desktop` dosyasının adından tanır.
 - `src/speak_to_print/output/`: `kwin_type.type_text()` ve `clipboard_paste.ClipboardPaster` (panoyu saklar, `--sensitive` ile ayarlar, sanal klavyeden yapıştırma tuşuna basar, geri yükler). Sanal klavyeyi oluşturmak ~2 sn sürer; bir kez oluşturup yeniden kullan.
@@ -37,6 +37,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Metni yazma: varsayılan `kwin-type` (1–2 ms, panoya dokunmaz, izin penceresi yok). Hata verirse otomatik yedek pano + Shift+Insert (~0,5 sn). İkisi de Türkçe Q, Türkçe F ve İngilizce (US) düzenlerinde denendi ve doğru çalıştı; pano + Ctrl+V ise Türkçe F'de çalışmıyor.
 - Uygulama servis değildir: otomatik başlama yok, pencere kapanınca tamamen kapanır.
 - Küçük (dinleme) penceresi odak almadığı için içine klavyeyle yazılamaz: metin orada yalnızca gösterilir. Metne ya da Düzenle'ye tıklanınca odak alan düzenleme penceresi açılır; oradaki Yapıştır pencereyi kapatır ve odak önceki uygulamaya dönünce yazar (`Application._paste_from_editor`).
+- Sözlük, ipucu metninin başına "Terimler: a, b, c." satırı olarak verilir (`config.build_prompt`); `hotwords` parametresi kullanılmaz (ölçümde işe yaramadı). Kısa listede etkili, uzun listede etkisiz.
 - Otomatik yapıştırma kullanıcı ayarıdır (varsayılan açık). Kapalıyken metin yalnızca gösterilir; küçük pencere metin alınana kadar kendiliğinden kapanmaz.
 
 ## Dikkat
@@ -51,7 +52,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - pip'ten gelen PySide6, KDE'nin Breeze görünümünü almıyor (görünüm `fusion`); yalnızca görsel fark.
 - Mikrofon yokken sistemin varsayılan ses kaynağı bir *monitor* olabilir; mikrofon sanılmamalı.
 - BTD 700 (Bluetooth) mikrofonu açıldıktan sonraki ilk yaklaşık yarım saniyeyi kaçırabiliyor; kayıt sırasında kulaklığın ses kalitesi de düşüyor. Kullanıcı ikisini de kabul etti: mikrofonu sürekli açık tutma ya da bu gecikmeyi gidermeye uğraşma.
-- Whisper kısık ya da uzak seste metin uydurabiliyor ("Altyazı M.K." gözlendi); boş sayılması gereken kayıtlar için önlem gerekli. Modelin güven değerleri bunu ayırt etmiyor.
+- Whisper kısık ya da uzak seste metin uydurabiliyor: bilinen altyazı kalıpları ("Altyazı M.K.") ya da kendisine verilen ipucu metninin karışık bir tekrarı. İkisi de `textguard.py`'de yakalanıp yazılmıyor; modelin güven değerleri bunları ayırt etmiyor. İpucu metnini değiştirirsen yankı önlemini gerçek kayıtlarla yeniden sına.
 - `language="tr"` ile tamamı İngilizce bir cümle Türkçeye çevriliyor; cümle içindeki İngilizce terimler ve kısa İngilizce cümleler ise korunuyor.
 - Modeller `~/.cache/huggingface`'ta durur; model dosyaları ve ses kayıtları git'e girmez.
 - Kullanıcının kabuğu fish: ortamı elle etkinleştirmek için `source .venv/bin/activate.fish`.

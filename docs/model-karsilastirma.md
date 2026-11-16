@@ -60,3 +60,23 @@ Ekran kartı belleği: large-v3 yaklaşık 3,9 GB, large-v3-turbo yaklaşık 2,2
   ve modelin güven değerleri (konuşma-yok olasılığı, ortalama log olasılık) bunu gerçek cümlelerden
   ayırmıyor. Önlem Faz 1'de tasarlanacak (ör. bilinen kalıpların listesi, giriş seviyesi).
 - **Kapsam:** yalnızca USB mikrofon ve okunan cümleler; BTD 700 ile karşılaştırma yapılmadı.
+
+## Ek: sözlük nasıl verilmeli (Faz 3, 16 Kasım 2026)
+
+Aynı 20 cümleyle, large-v3 üzerinde dört yol karşılaştırıldı:
+
+| Sözlüğün veriliş biçimi | Kelime hatası | Harf hatası | İngilizce terim |
+|---|---|---|---|
+| Sözlük yok (yalnızca noktalama ipucu) | %4,6 | %1,2 | 29/31 |
+| `hotwords` parametresi, 31 terim | %3,4 | %0,8 | 30/31 |
+| İpucunun başında "Terimler: commit, refactor, pull request." (3 terim) | %2,3 | %0,6 | 31/31 |
+| İpucunun başında "Terimler: …" (31 terim) | %4,0 | %1,1 | 29/31 |
+
+- **Karar:** sözlük, ipucu metninin başına "Terimler: …" satırı olarak eklenir (`config.build_prompt`).
+  `hotwords` kullanılmıyor: 3 terimle "commit"i düzeltmedi.
+- **Liste kısa tutulmalı:** 31 terimlik listede etki tamamen kayboldu. Sözlüğe yalnızca gerçekten yanlış
+  yazılan terimler girmeli.
+- **Yan etki ve önlemi:** kısık/uzak bir kayıtta model, ipucu metnini karıştırıp çıktı diye verdi
+  ("Merhaba, bugün ne yapacağıma henüz karar vermedim…"). `textguard.is_prompt_echo` bunu yakalıyor:
+  çıktının kelimelerinin en az %90'ı ipucunda geçiyorsa (ve çıktı en az 5 kelimeyse) metin yazılmıyor.
+  20 gerçek cümlenin ve serbest konuşmanın hiçbiri bu kurala takılmadı.

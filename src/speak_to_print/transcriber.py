@@ -17,7 +17,7 @@ import numpy as np
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 
 from . import textguard
-from .config import COMPUTE_TYPE, LANGUAGE, MODEL_NAME, SAMPLE_RATE, STYLE_PROMPT
+from .config import COMPUTE_TYPE, LANGUAGE, MODEL_NAME, SAMPLE_RATE, build_prompt
 from .cuda_libs import preload_cuda_libraries
 
 
@@ -59,21 +59,22 @@ class _Worker(QObject):
         except Exception as error:  # noqa: BLE001 — hatayı arayüze taşıyoruz
             self.load_failed.emit(f"{type(error).__name__}: {error}")
 
-    @Slot(object, bool)
-    def transcribe(self, samples: np.ndarray, use_prompt: bool) -> None:
+    @Slot(object, bool, list)
+    def transcribe(self, samples: np.ndarray, use_prompt: bool, vocabulary: list) -> None:
         if self._model is None:
             self.failed.emit("Model yüklü değil.")
             return
         try:
             start = time.perf_counter()
+            prompt = build_prompt(use_prompt, vocabulary)
             segments, _info = self._model.transcribe(
                 samples, language=LANGUAGE, beam_size=5, vad_filter=True,
-                initial_prompt=STYLE_PROMPT if use_prompt else None,
+                initial_prompt=prompt or None,
             )
             # `segments` tembel bir üreteçtir; çeviri, elemanlar tüketilirken yapılır.
             text = " ".join(segment.text.strip() for segment in segments).strip()
             withheld = ""
-            if textguard.is_invented(text):
+            if textguard.is_invented(text) or textguard.is_prompt_echo(text, prompt):
                 text, withheld = "", text
             self.done.emit(Transcript(text, withheld, time.perf_counter() - start, len(samples) / SAMPLE_RATE))
         except Exception as error:  # noqa: BLE001
@@ -89,7 +90,7 @@ class Transcriber(QObject):
     failed = Signal(str)
 
     _load_requested = Signal()
-    _transcribe_requested = Signal(object, bool)
+    _transcribe_requested = Signal(object, bool, list)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -109,8 +110,8 @@ class Transcriber(QObject):
     def load(self) -> None:
         self._load_requested.emit()
 
-    def transcribe(self, samples: np.ndarray, use_prompt: bool) -> None:
-        self._transcribe_requested.emit(samples, use_prompt)
+    def transcribe(self, samples: np.ndarray, use_prompt: bool, vocabulary: list[str] | None = None) -> None:
+        self._transcribe_requested.emit(samples, use_prompt, list(vocabulary or []))
 
     def shutdown(self, timeout_ms: int = 1500) -> bool:
         """İş parçacığını durdurur. Süre içinde bitmezse False döner (iş hâlâ sürüyordur)."""

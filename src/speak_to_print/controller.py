@@ -58,12 +58,13 @@ class TranscriberLike(Protocol):
     failed: SignalInstance
 
     def load(self) -> None: ...
-    def transcribe(self, samples, use_prompt: bool) -> None: ...
+    def transcribe(self, samples, use_prompt: bool, vocabulary: list[str]) -> None: ...
 
 
 class SettingsLike(Protocol):
     auto_paste: bool
     use_prompt: bool
+    vocabulary: list[str]
 
 
 class Controller(QObject):
@@ -105,10 +106,17 @@ class Controller(QObject):
 
     def toggle(self) -> None:
         """Kısayola basıldı: hazırsa dinlemeyi başlatır, dinliyorsa bitirir."""
+        if self.state in (State.LISTENING, State.PAUSED):
+            self.finish()
+        else:
+            self.start_listening()
+
+    def start_listening(self) -> None:
+        """Hazırsa dinlemeyi başlatır; zaten dinliyorsa bir şey yapmaz ("basılı tut" kipi bunu kullanır)."""
         if self.state is State.IDLE:
             self._begin()
         elif self.state in (State.LISTENING, State.PAUSED):
-            self.finish()
+            return
         elif self.state is State.LOADING:
             self.notice.emit("Model hâlâ yükleniyor; birkaç saniye sonra yeniden deneyin.")
         elif self.state is State.TRANSCRIBING:
@@ -173,7 +181,7 @@ class Controller(QObject):
             self._set_state(State.IDLE)
             self.notice.emit("Kayıt çok kısaydı; hiçbir şey yazılmadı.")
             return
-        self._transcriber.transcribe(samples, self._settings.use_prompt)
+        self._transcriber.transcribe(samples, self._settings.use_prompt, list(self._settings.vocabulary))
 
     def _on_transcribe_failed(self, message: str) -> None:
         if self.state is State.TRANSCRIBING:
@@ -208,7 +216,7 @@ class Controller(QObject):
             method = self._write_text(text + " ")
         except OutputError as error:
             return False, f"Metin yazılamadı: {error}"
-        return True, "Yazıldı." if method == "kwin-type" else "Yazıldı (yedek yöntem: pano)."
+        return True, {"kwin-type": "Yazıldı.", "pano-seçili": "Yazıldı (pano)."}.get(method, "Yazıldı (yedek yöntem: pano).")
 
     def _set_state(self, state: State) -> None:
         if state is not self.state:

@@ -11,6 +11,19 @@ LANGUAGE = "tr"
 # Modele verilen örnek metin: noktalama ve büyük harf kullanımını sabitlemeye yardım eder.
 STYLE_PROMPT = ("Merhaba, bugün yaptıklarımı not alıyorum. Önce toplantıya katıldım, "
                 "sonra e-postaları yanıtladım. Yarın ne yapacağıma henüz karar vermedim.")
+# Sözlükteki terimler ipucunun başına bu kalıpla eklenir. Faz 3'te ölçüldü: bu yol "commit" ve
+# "refactor"ı düzeltti (31/31 terim), `hotwords` parametresi ise düzeltmedi; uzun listede etki kayboluyor.
+VOCABULARY_PREFIX = "Terimler: {terms}. "
+
+
+def build_prompt(use_prompt: bool, vocabulary: list[str]) -> str:
+    """Modele verilecek ipucu metni: önce sözlük terimleri, sonra noktalama örneği."""
+    parts = []
+    if vocabulary:
+        parts.append(VOCABULARY_PREFIX.format(terms=", ".join(vocabulary)))
+    if use_prompt:
+        parts.append(STYLE_PROMPT)
+    return "".join(parts).strip()
 
 # Kayıt
 STOP_TAIL_MS = 250  # durdurduktan sonra bu kadar daha kaydet: son hece kesilmesin
