@@ -19,6 +19,9 @@ from ..config import EDITOR_SIZE, EDITOR_TITLE
 from .listening_popup import STYLE
 
 
+HINT = "Ctrl+Enter: yapıştır   Esc: kapat"
+
+
 class EditorWindow(QWidget):
     paste_clicked = Signal(str)  # düzenlenmiş metin, önceki uygulamaya yazılsın
     copy_clicked = Signal(str)
@@ -36,7 +39,7 @@ class EditorWindow(QWidget):
 
         title = QLabel("Metni düzenle")
         title.setObjectName("status")
-        self.note = QLabel("Ctrl+Enter: yapıştır   Esc: kapat")
+        self.note = QLabel(HINT)
         self.note.setObjectName("note")
         self.text = QPlainTextEdit()
         self.copy_button = QPushButton("Kopyala")
@@ -58,6 +61,7 @@ class EditorWindow(QWidget):
         layout.addLayout(buttons)
 
         self.text.textChanged.connect(lambda: self.text_edited.emit(self.text.toPlainText()))
+        self.text.textChanged.connect(lambda: self.note.setText(HINT))  # eski uyarı kalmasın
         self.copy_button.clicked.connect(lambda: self.copy_clicked.emit(self.text.toPlainText()))
         self.paste_button.clicked.connect(self._paste)
         self.close_button.clicked.connect(self.hide)
@@ -71,6 +75,7 @@ class EditorWindow(QWidget):
             self.text.setPlainText(text)
             self.text.blockSignals(False)
         self.text.moveCursor(QTextCursor.MoveOperation.End)
+        self.note.setText(HINT)
         self.show()
         self.raise_()
         self.activateWindow()

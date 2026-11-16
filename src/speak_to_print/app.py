@@ -155,6 +155,7 @@ class Application(QObject):
         self.popup.copy_clicked.connect(self._copy)
         self.popup.auto_paste_toggled.connect(self._set_auto_paste)
         self.popup.edit_requested.connect(self._open_editor)
+        self.popup.listen_clicked.connect(lambda: self._toggle_from("küçük pencere"))
 
         self.editor.copy_clicked.connect(self._copy)
         self.editor.paste_clicked.connect(self._paste_from_editor)

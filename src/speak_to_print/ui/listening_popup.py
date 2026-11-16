@@ -38,6 +38,7 @@ class ListeningPopup(QWidget):
     paste_clicked = Signal()
     copy_clicked = Signal(str)
     auto_paste_toggled = Signal(bool)
+    listen_clicked = Signal()  # yeni bir dikte başlat
     edit_requested = Signal(str)  # kullanıcı metne ya da Düzenle'ye tıkladı
 
     def __init__(self, seconds_recorded) -> None:
@@ -63,6 +64,9 @@ class ListeningPopup(QWidget):
         self.meter.setRange(0, 100)
         self.meter.setTextVisible(False)
         self.meter.setFixedWidth(150)
+        # Dinleme bittikten sonra seviye çubuğunun yerinde durur: yeni bir dikte başlatır.
+        self.listen_button = QPushButton("Dinlemeyi başlat")
+        self.listen_button.setToolTip("Yeni bir dikte başlatır. Metin, o an yazı yazdığınız uygulamaya gider.")
         self.auto_paste = QCheckBox("Otomatik yapıştır")
         self.auto_paste.setToolTip("Açıkken çevrilen metin imlecin olduğu yere kendiliğinden yazılır.")
 
@@ -87,6 +91,7 @@ class ListeningPopup(QWidget):
         top = QHBoxLayout()
         top.addWidget(self.status, 1)
         top.addWidget(self.meter)
+        top.addWidget(self.listen_button)
         top.addWidget(self.auto_paste)
         buttons = QHBoxLayout()
         buttons.addWidget(self.note, 1)
@@ -99,11 +104,13 @@ class ListeningPopup(QWidget):
         layout.addLayout(buttons)
 
         # Hiçbir bileşen klavye odağı istemesin.
-        for widget in (self.text, self.auto_paste, self.meter, *self._listening_buttons, *self._result_buttons):
+        for widget in (self.text, self.auto_paste, self.meter, self.listen_button,
+                       *self._listening_buttons, *self._result_buttons):
             widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.pause_button.clicked.connect(self.pause_clicked)
         self.finish_button.clicked.connect(self.finish_clicked)
+        self.listen_button.clicked.connect(self.listen_clicked)
         self.cancel_button.clicked.connect(self.cancel_clicked)
         self.paste_button.clicked.connect(self.paste_clicked)
         self.copy_button.clicked.connect(lambda: self.copy_clicked.emit(self.text.toPlainText()))
@@ -212,6 +219,8 @@ class ListeningPopup(QWidget):
             button.setEnabled(True)
         for button in self._result_buttons:
             button.setVisible(not listening)
+        self.meter.setVisible(listening)
+        self.listen_button.setVisible(not listening)
 
     def _refresh_status(self) -> None:
         seconds = int(self._seconds_recorded())

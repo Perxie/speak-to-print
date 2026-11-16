@@ -4,7 +4,7 @@
 
 ## Şu an
 - Son yapılan: Düzenleme penceresi ve "Dinlemeyi başlat" düğmeleri (ana pencere, tepsi menüsü) kullanıcı tarafından gerçek ekranda denendi ve onaylandı; commit edilip GitHub'a gönderildi. Düzenleyiciden Yapıştır'da odak önceki uygulamaya ~40 ms'de dönüyor; dikte ana pencereden başlatıldıysa dönecek uygulama olmadığı için yazılmıyor ve düzenleyici geri açılıyor (beklenen davranış).
-- Yarım kalan: Kullanıcı aynı "Dinlemeyi başlat" düğmesini küçük pencerede de istedi; ekleniyor.
+- Yarım kalan: Küçük pencereye "Dinlemeyi başlat" düğmesi eklendi (dinleme bitince seviye çubuğunun yerinde görünür); düzenleyicideki eski uyarının kalması düzeltildi. Ekransız denendi, commit edilmedi; kullanıcı testi bekliyor.
 - Sıradaki: Küçük penceredeki düğmenin kullanıcı testi; sonra Faz 2'nin kalan maddesi (geçmiş listesi).
 
 ## Yapılacaklar
