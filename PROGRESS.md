@@ -4,8 +4,8 @@
 
 ## Şu an
 - Son yapılan: Faz 0.6 tamamlandı, kullanıcı deneyip onayladı; commit edilip GitHub'a gönderildi. Varsayılan yazma yöntemi **kwin-type** (1–2 ms, panoya dokunmuyor, izin penceresi çıkmadı; Kate, WhatsApp Web, Konsole ve PyCharm terminalinde 1690 karakterlik metin doğru çıktı). Yedek: pano + Shift+Insert (~0,5 sn; aynı uygulamalarda çalıştı, pano geri geldi).
-- Yarım kalan: Yok.
-- Sıradaki: Faz 0.7 — dinleme penceresi denemesi (düğmeye tıklayınca odak hedef pencerede kalıyor mu). Başlamadan önce kullanıcının onayı beklenir.
+- Yarım kalan: Faz 0.7 başladı (kullanıcı onay verdi): `spikes/popup_check.py` ile dinleme penceresinin odağı çalıp çalmadığı deneniyor (önce Qt bayrakları, yetmezse KWin pencere kuralı).
+- Sıradaki: Kullanıcı Kate'te kısayolla pencereyi açıp Bitir'e tıklayacak; metin Kate'e gitmeli.
 
 ## Yapılacaklar
 
@@ -15,7 +15,7 @@
 - [x] 0.3 Mikrofon: sistem varsayılanından temiz kayıt alınıyor. BTD 700'de Enter'a basar basmaz konuşunca ilk hece kesildi ("Portakal" → "Kalsuyu", kayıt 0,4 sn kısa geldi); kullanıcı ~0,5 sn beklemeyi kabul etti.
 - [x] 0.4 Model karşılaştırması: kullanıcının kayıtlarıyla tablo çıktı, large-v3 seçildi, karışık dil hedefi sürüyor (`docs/model-karsilastirma.md`).
 - [x] 0.5 Kısayol: portal kısayolu Kickoff'tan açılışta da, yeniden açılıştan sonra da çalışıyor; basılı tutma da algılanıyor. (Klavye düzeni değiştirerek denenmedi.)
-- [x] 0.6 Yazma: kwin-type seçildi, yedek pano + Shift+Insert. Denenmeyenler: PyCharm editörü, ayrı bir Firefox alanı, Türkçe F ve İngilizce klavye düzenleri, gerçek kullanımda Klipper geçmişi.
+- [x] 0.6 Yazma: kwin-type seçildi, yedek pano + Shift+Insert. İkisi de Türkçe Q, Türkçe F ve İngilizce (US) düzenlerinde uzun metinle birebir doğru çıktı; yedek yöntemde metin Klipper geçmişine düşmedi. Ctrl+V Türkçe F'de çalışmadı (beklendiği gibi). Denenmeyenler: PyCharm editörü, ayrı bir Firefox alanı.
 - [ ] 0.7 Dinleme penceresi: Bitir'e tıklayınca metin Kate'e gidiyor, pencere odağı çalmıyor.
 
 ### Faz 1 — Çalışan çekirdek

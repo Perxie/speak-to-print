@@ -27,7 +27,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Konuşma tanıma: faster-whisper + ctranslate2, GPU'da (RTX 4070, 12 GB). Varsayılan model `large-v3` (`float16`, `language="tr"`), kullanıcı seçti. Daha hızlı ama daha az doğru modeller (turbo gibi) istenmiyor; yalnızca daha doğru bir model çıkarsa eklenir. Gerekçe ve ölçümler: `docs/model-karsilastirma.md`.
 - Arayüz ve mikrofon: PySide6 (Qt 6, QtMultimedia). Bağımlılık `pyside6-addons`; `pyside6` üst paketi gereksiz WebEngine'i de indiriyor. D-Bus: dbus-fast.
 - Global kısayol: XDG GlobalShortcuts portalı (kullanıcının tuşu Shift+Pause).
-- Metni yazma: varsayılan `kwin-type` (1–2 ms, panoya dokunmaz, izin penceresi yok). Hata verirse otomatik yedek pano + Shift+Insert (~0,5 sn). İkisi de Türkçe Q ile denendi; Türkçe F ve İngilizce düzenlerle denenmedi.
+- Metni yazma: varsayılan `kwin-type` (1–2 ms, panoya dokunmaz, izin penceresi yok). Hata verirse otomatik yedek pano + Shift+Insert (~0,5 sn). İkisi de Türkçe Q, Türkçe F ve İngilizce (US) düzenlerinde denendi ve doğru çalıştı; pano + Ctrl+V ise Türkçe F'de çalışmıyor.
 - Uygulama servis değildir: otomatik başlama yok, pencere kapanınca tamamen kapanır.
 
 ## Dikkat

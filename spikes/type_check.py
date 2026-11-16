@@ -17,6 +17,7 @@ Sonuçlar spikes/data/type_check.log dosyasına da yazılır.
 from __future__ import annotations
 
 import re
+import secrets
 import subprocess
 import sys
 import time
@@ -100,7 +101,9 @@ def main() -> int:
             continue
         method = METHODS[choice]
         long = input("Metin: Enter = kısa cümle, u = uzun metin (yaklaşık 1700 karakter) > ").strip().lower() == "u"
-        text = LONG_TEXT if long else TEXT
+        # Her denemeye benzersiz bir numara eklenir: böylece karşılaştırma panoda kalmış eski bir
+        # kopyayla yanlışlıkla tutmaz ve pano geçmişi (Klipper) kontrolü her seferinde ölçülebilir.
+        text = f"{LONG_TEXT if long else TEXT} [{secrets.randbelow(9000) + 1000}]"
         if long:
             method += " (uzun)"
         app = input("Hedef uygulamanın adı (ör. Kate, Firefox, Konsole, PyCharm) > ").strip() or "?"
@@ -115,6 +118,7 @@ def main() -> int:
             before = clipboard_text()
             in_history_before = in_klipper_history(text)
 
+            print(f"  Yazılacak metnin sonu: …{text[-28:]}")
             print(f"  {COUNTDOWN_SECONDS} saniye içinde hedef pencerede yazı alanına tıklayın…")
             for remaining in range(COUNTDOWN_SECONDS, 0, -1):
                 print(f"  {remaining}…", flush=True)
@@ -154,7 +158,7 @@ def main() -> int:
             print("  Anlaşılmadı (metin bu pencereye mi yazıldı?). Yalnızca Enter, y ya da k yazın.")
             answer = input("  > ").strip().lower()
         if answer == "k":
-            actual = clipboard_text()
+            actual = clipboard_text().rstrip("\n ")  # bazı uygulamalar kopyalarken sona satır sonu ya da boşluk ekler
             if actual == text:
                 verdict = "birebir aynı (karşılaştırıldı)"
                 print("  ✓ Birebir aynı.")
