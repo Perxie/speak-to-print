@@ -127,6 +127,12 @@ wheels = [
 ]
 
 [[package]]
+name = "evdev"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2e/07/eb30593524303d1367f0dc00c1c66582c994dba412a47751e34bad9fa29b/evdev-2.0.0.tar.gz", hash = "sha256:442fb3f4c8dfc9e61e901133c356220c02d663eca8f34722e0cecdd637eba504", size = 33766, upload-time = "2026-08-23T10:31:26.835Z" }
+
+[[package]]
 name = "faster-whisper"
 version = "1.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -460,6 +466,7 @@ source = { editable = "." }
 dependencies = [
     { name = "av" },
     { name = "dbus-fast" },
+    { name = "evdev" },
     { name = "faster-whisper" },
     { name = "nvidia-cublas-cu12" },
     { name = "pyside6-addons" },
@@ -469,6 +476,7 @@ dependencies = [
 requires-dist = [
     { name = "av", specifier = ">=18,<19" },
     { name = "dbus-fast", specifier = ">=5.2.0" },
+    { name = "evdev", specifier = ">=2.0.0" },
     { name = "faster-whisper", specifier = ">=1.2.1" },
     { name = "nvidia-cublas-cu12", specifier = ">=12,<13" },
     { name = "pyside6-addons", specifier = ">=6.12.0" },

@@ -11,6 +11,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `uv run python spikes/record_set.py [--device "USB PnP"] [--redo 5] [--status]`: `spikes/sentences_tr.txt` cümlelerini `recordings/set/` altına kaydeder.
 - `uv run python spikes/model_compare.py [--models large-v3 ...]`: kayıtları aday modellerle çevirir, `recordings/set/report.md` raporunu yazar.
 - `uv run python spikes/hotkey_check.py [--install-desktop | --uninstall-desktop] [--no-model]`: portal kısayolunu ve Kickoff'tan açılışı deneyen pencere; günlüğü `spikes/data/hotkey_check.log`.
+- `uv run python spikes/type_check.py`: test cümlesini seçilen yöntemle etkin pencereye yazar (etkileşimli); günlüğü `spikes/data/type_check.log`.
 
 ## Nerede ne var
 - `docs/model-karsilastirma.md`: Faz 0.4 sonuçları, model kararı ve açık konular (ipucu metni, sözlük, uydurma metin).
@@ -18,13 +19,15 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `src/speak_to_print/`: uygulama kodu. `spikes/`: Faz 0 deneme betikleri (uygulamaya dahil değil); `spikes/data/` git dışı.
 - `src/speak_to_print/hotkey.py`: `PortalHotkeys` (QObject), XDG GlobalShortcuts portalını ayrı bir asyncio iş parçacığında dinler; `activated`/`deactivated`/`bound`/`failed` Qt sinyalleri verir.
 - `src/speak_to_print/desktop_entry.py`: `APP_ID` (`io.github.perxie.SpeakToPrint`) ve Kickoff kaydını yazan `install()`. Portal, kimliği bu `.desktop` dosyasının adından tanır.
+- `src/speak_to_print/output/`: `kwin_type.type_text()` ve `clipboard_paste.ClipboardPaster` (panoyu saklar, `--sensitive` ile ayarlar, sanal klavyeden yapıştırma tuşuna basar, geri yükler). Sanal klavyeyi oluşturmak ~2 sn sürer; bir kez oluşturup yeniden kullan.
 - `src/speak_to_print/cuda_libs.py`: `preload_cuda_libraries()`, pip'ten gelen cuBLAS'ı `LD_LIBRARY_PATH` olmadan yükler. GPU'da model oluşturmadan önce çağrılmalı.
 
 ## Önemli kararlar (ayrıntı: `docs/plan.md`)
 - Python 3.14, uv'nin kendi kopyası (`[tool.uv] python-preference = "only-managed"`). Sistem Python'u kullanılmaz; pacman güncellemesi `.venv`'i bozmasın.
 - Konuşma tanıma: faster-whisper + ctranslate2, GPU'da (RTX 4070, 12 GB). Varsayılan model `large-v3` (`float16`, `language="tr"`), kullanıcı seçti. Daha hızlı ama daha az doğru modeller (turbo gibi) istenmiyor; yalnızca daha doğru bir model çıkarsa eklenir. Gerekçe ve ölçümler: `docs/model-karsilastirma.md`.
 - Arayüz ve mikrofon: PySide6 (Qt 6, QtMultimedia). Bağımlılık `pyside6-addons`; `pyside6` üst paketi gereksiz WebEngine'i de indiriyor. D-Bus: dbus-fast.
-- Global kısayol: XDG GlobalShortcuts portalı. Metni yazma: kwin-type ya da pano + yapıştırma tuşu (Faz 0.6'da seçilir).
+- Global kısayol: XDG GlobalShortcuts portalı (kullanıcının tuşu Shift+Pause).
+- Metni yazma: varsayılan `kwin-type` (1–2 ms, panoya dokunmaz, izin penceresi yok). Hata verirse otomatik yedek pano + Shift+Insert (~0,5 sn). İkisi de Türkçe Q ile denendi; Türkçe F ve İngilizce düzenlerle denenmedi.
 - Uygulama servis değildir: otomatik başlama yok, pencere kapanınca tamamen kapanır.
 
 ## Dikkat

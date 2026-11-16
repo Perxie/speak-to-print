@@ -14,6 +14,7 @@ onlar listede yok. `~/.cache` ise adına rağmen diskte durur ve kendiliğinden 
 | Konuşma tanıma modeli (large-v3) | `~/.cache/huggingface/hub/models--Systran--faster-whisper-large-v3` ve `~/.cache/huggingface/hub/blobs` | 3,1 GB | `uv run hf cache rm model/Systran/faster-whisper-large-v3` |
 | Kickoff menü kaydı ve portal uygulama kimliği | `~/.local/share/applications/io.github.perxie.SpeakToPrint.desktop` | küçük | `uv run python spikes/hotkey_check.py --uninstall-desktop` |
 | KDE'de bu uygulamaya atanmış global kısayol (Shift+Pause) | KDE Sistem Ayarları → Klavye → Kısayollar → "Speak to Print" (`~/.config/kglobalshortcutsrc`) | küçük | Sistem Ayarları'ndan kısayolu kaldırın |
+| kwin-type programı (metni pencereye yazar) | `~/.local/bin/kwin-type` | 22 KB | dosyayı silin |
 | uv'nin kurduğu Python 3.14 (`.venv` bunu kullanır) | `~/.local/share/uv/python/` ve `~/.local/bin/python3.14` bağlantısı | 117 MB | `uv python uninstall 3.14` |
 
 ## Geliştirme için gerekli olanlar
@@ -28,6 +29,7 @@ onlar listede yok. `~/.cache` ise adına rağmen diskte durur ve kendiliğinden 
 
 | Ne | Nerede | Boyut | Silmek için |
 |---|---|---|---|
+| kwin-type kaynak kodu (derleme için indirildi) | `~/.local/src/kwin-type/` | küçük | klasörü silin |
 | uv'nin paket önbelleği | `~/.cache/uv/` | değişir (16 Kasım'da temizlendi) | `uv cache clean` |
 | Hugging Face'in yardımcı önbelleği | `~/.cache/huggingface/xet/` | küçük | klasör silinebilir |
 

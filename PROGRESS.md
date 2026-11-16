@@ -3,9 +3,9 @@
 <!-- Bu dosya kısa kalır: "Şu an" bölümünün üstüne yazılır, biten maddeler birikince tek satırlık özete indirilir. -->
 
 ## Şu an
-- Son yapılan: Faz 0.5 tamamlandı, kullanıcı deneyip onayladı; commit edilip GitHub'a gönderildi. Portal kısayolu (Shift+Pause) basma ve bırakmayı tek tek veriyor (3 sn basılı tutunca tekrar yok), başka pencere öndeyken çalışıyor, yeniden açılışta onay penceresi çıkmadan geliyor; Kickoff'tan açılışta model GPU'ya yükleniyor ve kısayol çalışıyor. Turbo silindi, `docs/proje-disi-dosyalar.md` eklendi.
+- Son yapılan: Faz 0.6 tamamlandı, kullanıcı deneyip onayladı; commit edilip GitHub'a gönderildi. Varsayılan yazma yöntemi **kwin-type** (1–2 ms, panoya dokunmuyor, izin penceresi çıkmadı; Kate, WhatsApp Web, Konsole ve PyCharm terminalinde 1690 karakterlik metin doğru çıktı). Yedek: pano + Shift+Insert (~0,5 sn; aynı uygulamalarda çalıştı, pano geri geldi).
 - Yarım kalan: Yok.
-- Sıradaki: Faz 0.6 — imlecin olduğu yere yazma denemesi (kwin-type ve pano yöntemi). Başlamadan önce kullanıcının onayı beklenir.
+- Sıradaki: Faz 0.7 — dinleme penceresi denemesi (düğmeye tıklayınca odak hedef pencerede kalıyor mu). Başlamadan önce kullanıcının onayı beklenir.
 
 ## Yapılacaklar
 
@@ -15,7 +15,7 @@
 - [x] 0.3 Mikrofon: sistem varsayılanından temiz kayıt alınıyor. BTD 700'de Enter'a basar basmaz konuşunca ilk hece kesildi ("Portakal" → "Kalsuyu", kayıt 0,4 sn kısa geldi); kullanıcı ~0,5 sn beklemeyi kabul etti.
 - [x] 0.4 Model karşılaştırması: kullanıcının kayıtlarıyla tablo çıktı, large-v3 seçildi, karışık dil hedefi sürüyor (`docs/model-karsilastirma.md`).
 - [x] 0.5 Kısayol: portal kısayolu Kickoff'tan açılışta da, yeniden açılıştan sonra da çalışıyor; basılı tutma da algılanıyor. (Klavye düzeni değiştirerek denenmedi.)
-- [ ] 0.6 Yazma: Türkçe test cümlesi Kate, Firefox, Konsole, PyCharm'da birebir çıkıyor; yöntem seçildi.
+- [x] 0.6 Yazma: kwin-type seçildi, yedek pano + Shift+Insert. Denenmeyenler: PyCharm editörü, ayrı bir Firefox alanı, Türkçe F ve İngilizce klavye düzenleri, gerçek kullanımda Klipper geçmişi.
 - [ ] 0.7 Dinleme penceresi: Bitir'e tıklayınca metin Kate'e gidiyor, pencere odağı çalmıyor.
 
 ### Faz 1 — Çalışan çekirdek
