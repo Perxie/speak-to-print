@@ -44,6 +44,16 @@ def install(command: list[str], comment: str = "Yerel dikte uygulaması") -> Pat
     return path
 
 
+def ensure(command: list[str]) -> bool:
+    """Menü kaydı yoksa ya da başka bir komutu gösteriyorsa yeniden yazar. Değiştiyse True döner."""
+    path = desktop_file_path()
+    expected = f"Exec={shlex.join(command)}"
+    if path.exists() and expected in path.read_text(encoding="utf-8").splitlines():
+        return False
+    install(command)
+    return True
+
+
 def uninstall() -> bool:
     path = desktop_file_path()
     if not path.exists():

@@ -111,3 +111,15 @@ class ClipboardPaster:
                 _set(old, primary)
         except subprocess.TimeoutExpired as error:
             raise OutputError("Pano araçları (wl-copy/wl-paste) yanıt vermedi.") from error
+
+
+def copy_text(text: str) -> None:
+    """Metni panoya kopyalar (kullanıcı Kopyala'ya bastığında).
+
+    wl-copy, penceremiz odakta olmasa da çalışır; Qt'nin kendi panosu Wayland'de
+    yalnızca odaktaki pencereden yazabilir.
+    """
+    try:
+        _set(("text/plain;charset=utf-8", text.encode("utf-8")), primary=False)
+    except subprocess.TimeoutExpired as error:
+        raise OutputError("Pano aracı (wl-copy) yanıt vermedi.") from error

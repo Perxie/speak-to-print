@@ -4,8 +4,9 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 
 ## Komutlar
 - `uv sync`: `.venv`'i `pyproject.toml` ve `uv.lock`'a göre kurar ya da günceller.
-- `uv run speak-to-print`: uygulamayı çalıştırır.
+- `uv run speak-to-print`: uygulamayı çalıştırır. Günlüğü: `~/.local/state/speak-to-print/speak-to-print.log` (durumlar, süreler, yazma yöntemi; dikte edilen metin yazılmaz). Kullanıcı denemelerinden sonra sonucu buradan oku.
 - `uv add <paket>`: bağımlılık ekler. `pip install` kullanma.
+- `uv run pytest`: birim testleri (durum makinesi, uydurma metin önlemi); ekran, mikrofon ve model gerektirmez.
 - `uv run python spikes/gpu_check.py [--model large-v3-turbo]`: modeli GPU'da dener, hızı ve bellek kullanımını ölçer.
 - `uv run python spikes/mic_check.py [--list] [--device "USB PnP"] [--seconds 10]`: mikrofondan kayıt alır, seviyeyi ölçer, Türkçe yazıya çevirir.
 - `uv run python spikes/record_set.py [--device "USB PnP"] [--redo 5] [--status]`: `spikes/sentences_tr.txt` cümlelerini `recordings/set/` altına kaydeder.
@@ -18,6 +19,10 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `docs/model-karsilastirma.md`: Faz 0.4 sonuçları, model kararı ve açık konular (ipucu metni, sözlük, uydurma metin).
 - `docs/plan.md`: onaylanmış plan. Kararların gerekçeleri, fazlar ve her denemenin geçme ölçütü burada.
 - `src/speak_to_print/`: uygulama kodu. `spikes/`: Faz 0 deneme betikleri (uygulamaya dahil değil); `spikes/data/` git dışı.
+- `src/speak_to_print/app.py`: giriş noktası; parçaları oluşturup bağlar, tek kopya denetimi yapar, açılışta Kickoff kaydını ve KWin kuralını günceller.
+- `src/speak_to_print/controller.py`: durum makinesi (`State`, `Outcome`); bağımlılıkları dışarıdan alır, `tests/test_controller.py` sahte nesnelerle sınar. Yeni davranış eklerken önce buraya ve teste bak.
+- `src/speak_to_print/audio.py` (`Recorder`), `transcriber.py` (`Transcriber`, ayrı QThread), `textguard.py` (uydurma metin kalıpları), `settings.py` (QSettings), `config.py` (sabitler; `POPUP_TITLE`/`POPUP_SIZE` KWin kuralıyla eşleşmek zorunda).
+- `src/speak_to_print/ui/`: `listening_popup.py` (odak almayan, sabit boyutlu küçük pencere), `main_window.py`, `tray.py`.
 - `src/speak_to_print/hotkey.py`: `PortalHotkeys` (QObject), XDG GlobalShortcuts portalını ayrı bir asyncio iş parçacığında dinler; `activated`/`deactivated`/`bound`/`failed` Qt sinyalleri verir.
 - `src/speak_to_print/desktop_entry.py`: `APP_ID` (`io.github.perxie.SpeakToPrint`) ve Kickoff kaydını yazan `install()`. Portal, kimliği bu `.desktop` dosyasının adından tanır.
 - `src/speak_to_print/output/`: `kwin_type.type_text()` ve `clipboard_paste.ClipboardPaster` (panoyu saklar, `--sensitive` ile ayarlar, sanal klavyeden yapıştırma tuşuna basar, geri yükler). Sanal klavyeyi oluşturmak ~2 sn sürer; bir kez oluşturup yeniden kullan.
@@ -31,6 +36,8 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Global kısayol: XDG GlobalShortcuts portalı (kullanıcının tuşu Shift+Pause).
 - Metni yazma: varsayılan `kwin-type` (1–2 ms, panoya dokunmaz, izin penceresi yok). Hata verirse otomatik yedek pano + Shift+Insert (~0,5 sn). İkisi de Türkçe Q, Türkçe F ve İngilizce (US) düzenlerinde denendi ve doğru çalıştı; pano + Ctrl+V ise Türkçe F'de çalışmıyor.
 - Uygulama servis değildir: otomatik başlama yok, pencere kapanınca tamamen kapanır.
+- Küçük (dinleme) penceresi odak almadığı için içine klavyeyle yazılamaz: metin orada yalnızca gösterilir; düzenleme ayrı, odak alan bir pencerede olur (Faz 2).
+- Otomatik yapıştırma kullanıcı ayarıdır (varsayılan açık). Kapalıyken metin yalnızca gösterilir; küçük pencere metin alınana kadar kendiliğinden kapanmaz.
 
 ## Dikkat
 - ctranslate2 4.9.0 cuBLAS'ı CUDA 12 olarak (`libcublas.so.12`) çalışma anında açıyor; cuDNN gerekmiyor. Bu yüzden bağımlılık `nvidia-cublas-cu12`.

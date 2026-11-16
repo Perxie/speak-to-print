@@ -111,6 +111,15 @@ def install_popup_rule(app_id: str, title: str, x: int, y: int) -> Path | None:
     return made_backup
 
 
+def ensure_popup_rule(app_id: str, title: str, x: int, y: int) -> bool:
+    """Kural yoksa ya da başlığı/konumu farklıysa yazar. Bir şey değiştiyse True döner."""
+    if (popup_rule_installed() and _read(RULE_ID, "title") == title and _read(RULE_ID, "wmclass") == app_id
+            and _read(RULE_ID, "position") == f"{x},{y}" and _read(RULE_ID, "acceptfocus") == "false"):
+        return False
+    install_popup_rule(app_id, title, x, y)
+    return True
+
+
 def remove_popup_rule() -> bool:
     rules = _rule_ids()
     if RULE_ID not in rules:
