@@ -21,6 +21,7 @@ from .audio import Recorder
 from .config import (EDITOR_GAP, EDITOR_SIZE, EDITOR_TITLE, POPUP_BOTTOM_MARGIN, POPUP_SIZE, POPUP_TITLE,
                      SHORTCUT_DESCRIPTION, SHORTCUT_ID)
 from .controller import Controller, Outcome, State
+from .history import History
 from .hotkey import PortalHotkeys, Shortcut
 from .output import OutputError, clipboard_paste
 from .output.writer import TextWriter
@@ -106,6 +107,7 @@ class Application(QObject):
         settings: Settings | None = None,
         write_text: Callable[[str], str] | None = None,
         app_has_focus: Callable[[], bool] | None = None,
+        history: History | None = None,
         on_quit: Callable[[], None] | None = None,
     ) -> None:
         super().__init__()
@@ -113,6 +115,7 @@ class Application(QObject):
         self._app_has_focus = app_has_focus or (
             lambda: QGuiApplication.applicationState() == Qt.ApplicationState.ApplicationActive)
         self.editor = EditorWindow()
+        self.history = history or History()
         self._on_quit = on_quit or (lambda: None)
         self._quitting = False
         self._writer = TextWriter() if write_text is None else None
@@ -138,6 +141,7 @@ class Application(QObject):
         self.server = QLocalServer()
         self._connect()
         self._sync_options()
+        self.window.set_history(self.history.recent())
 
     def _connect(self) -> None:
         self.settings.changed.connect(self._sync_options)
@@ -157,11 +161,15 @@ class Application(QObject):
         self.popup.edit_requested.connect(self._open_editor)
         self.popup.listen_clicked.connect(lambda: self._toggle_from("küçük pencere"))
 
-        self.editor.copy_clicked.connect(self._copy)
+        self.editor.copy_clicked.connect(self._copy_from_editor)
+        self.editor.listen_clicked.connect(lambda: self._toggle_from("düzenleme penceresi"))
         self.editor.paste_clicked.connect(self._paste_from_editor)
         self.editor.text_edited.connect(self._on_text_edited)
 
         self.window.copy_clicked.connect(self._copy)
+        self.window.edit_clicked.connect(self._open_editor)
+        self.window.delete_clicked.connect(self._delete_history)
+        self.window.clear_clicked.connect(self._clear_history)
         self.window.auto_paste_toggled.connect(self._set_auto_paste)
         self.window.use_prompt_toggled.connect(self._set_use_prompt)
         self.window.configure_shortcut_clicked.connect(self.hotkeys.configure)
@@ -225,7 +233,26 @@ class Application(QObject):
 
     def _on_text_edited(self, text: str) -> None:
         self.controller.last_text = text
-        self.window.set_last_text(text)
+
+    def _copy_from_editor(self, text: str) -> None:
+        self._copy(text)
+        self._remember(text)  # düzenlenmiş hâli de geçmişe girsin
+
+    # ------------------------------------------------------------ geçmiş
+
+    def _remember(self, text: str) -> None:
+        entry = self.history.add(text)
+        if entry is not None:
+            log.info("Geçmişe eklendi (%d karakter).", len(entry.text))
+            self.window.add_history(entry)
+
+    def _delete_history(self, entry_id: int) -> None:
+        self.history.delete(entry_id)
+        log.info("Geçmişten bir kayıt silindi.")
+
+    def _clear_history(self) -> None:
+        self.history.clear()
+        log.info("Geçmiş temizlendi.")
 
     def _paste_from_editor(self, text: str) -> None:
         """Düzenleme penceresini kapatır; odak önceki uygulamaya dönünce metni oraya yazar."""
@@ -270,6 +297,7 @@ class Application(QObject):
         else:
             log.info("Durum: %s", state.name)
         self.popup.set_state(state)
+        self.editor.set_state(state)
         self.window.set_state(state, self.controller.failure)
         self.tray.set_state(state)
 
@@ -285,6 +313,7 @@ class Application(QObject):
         log.info("Sonuç: %s — %s", "yazıldı" if outcome.pasted else "yazılmadı", outcome.note.split("“")[0])
         self.popup.show_outcome(outcome)
         self.window.show_outcome(outcome)
+        self._remember(outcome.text)
 
     def _on_notice(self, text: str) -> None:
         log.info("Bilgi: %s", text)
@@ -322,6 +351,7 @@ class Application(QObject):
         if self._writer is not None:
             self._writer.close()
         self.server.close()
+        self.history.close()
         if not self.transcriber.shutdown():
             # Model yüklemesi ya da çeviri sürüyor; beklemek yerine süreci sonlandır
             # (ekran kartı belleği süreç bitince serbest kalır).

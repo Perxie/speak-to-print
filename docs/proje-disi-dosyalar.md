@@ -17,6 +17,7 @@ onlar listede yok. `~/.cache` ise adına rağmen diskte durur ve kendiliğinden 
 | kwin-type programı (metni pencereye yazar) | `~/.local/bin/kwin-type` | 22 KB | dosyayı silin |
 | Dinleme ve düzenleme pencereleri için KWin pencere kuralları | `~/.config/kwinrulesrc` içindeki `speak-to-print-dinleme` ve `speak-to-print-duzenleme` bölümleri (dosyanın ilk hâli: `kwinrulesrc.speak-to-print.yedek`, boştu) | küçük | Sistem Ayarları → Pencere Yönetimi → Pencere Kuralları'ndan iki kuralı silin (uygulama her açılışta yeniden yazar); sonra yedek dosyası silinebilir |
 | Uygulamanın ayarları (otomatik yapıştırma, noktalama ipucu) | `~/.config/speak-to-print/speak-to-print.conf` | küçük | klasörü silin |
+| Çeviri geçmişi (dikte ettiğiniz metinler, düz hâlde; en yeni 200 kayıt) | `~/.local/share/speak-to-print/history.db` | küçük | uygulamada "Geçmişi temizle" ya da klasörü silin |
 | Uygulamanın günlüğü (durumlar ve süreler; dikte edilen metin yazılmaz) | `~/.local/state/speak-to-print/speak-to-print.log` (en çok 2 × 512 KB) | küçük | klasörü silin |
 | uv'nin kurduğu Python 3.14 (`.venv` bunu kullanır) | `~/.local/share/uv/python/` ve `~/.local/bin/python3.14` bağlantısı | 117 MB | `uv python uninstall 3.14` |
 

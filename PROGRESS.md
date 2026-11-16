@@ -3,9 +3,9 @@
 <!-- Bu dosya kısa kalır: "Şu an" bölümünün üstüne yazılır, biten maddeler birikince tek satırlık özete indirilir. -->
 
 ## Şu an
-- Son yapılan: Düzenleme penceresi ve "Dinlemeyi başlat" düğmeleri (ana pencere, tepsi menüsü) kullanıcı tarafından gerçek ekranda denendi ve onaylandı; commit edilip GitHub'a gönderildi. Düzenleyiciden Yapıştır'da odak önceki uygulamaya ~40 ms'de dönüyor; dikte ana pencereden başlatıldıysa dönecek uygulama olmadığı için yazılmıyor ve düzenleyici geri açılıyor (beklenen davranış).
-- Yarım kalan: Küçük pencereye "Dinlemeyi başlat" düğmesi eklendi (dinleme bitince seviye çubuğunun yerinde görünür); düzenleyicideki eski uyarının kalması düzeltildi. Ekransız denendi, commit edilmedi; kullanıcı testi bekliyor.
-- Sıradaki: Küçük penceredeki düğmenin kullanıcı testi; sonra Faz 2'nin kalan maddesi (geçmiş listesi).
+- Son yapılan: Faz 2 tamamlandı, kullanıcı deneyip onayladı; commit edilip GitHub'a gönderildi: düzenleme penceresi (içinde "Dinlemeyi başlat" düğmesiyle), geçmiş listesi (SQLite), dinlemeyi başlatma düğmeleri (ana pencere, tepsi, küçük pencere, düzenleyici).
+- Yarım kalan: Faz 3 (ayarlar) başladı, kullanıcı onay verdi: kısayol davranışı (aç/kapa ya da basılı tut), mikrofon seçimi, yazma yöntemi, sözlük (hotwords), geçmişi saklama aç/kapa; hepsi bir "Ayarlar" penceresinde.
+- Sıradaki: Faz 3'ü bitirip test tarifini vermek.
 
 ## Yapılacaklar
 
@@ -16,9 +16,7 @@
 - [x] Kickoff'tan açılıyor; kısayolla dinliyor, Beklet/Bitir/İptal çalışıyor, metin imlece yazılıyor ve küçük pencerede gösteriliyor (Kopyala, Yapıştır, otomatik yapıştırma aç/kapa); kapanınca GPU belleği boşalıyor. Uydurma metin önlemi, son hece payı, "ses bekleniyor" göstergesi ve günlük dosyası dahil.
 
 ### Faz 2 — Düzenleme ve geçmiş
-- [x] Çevrilen metin düzenleme penceresinde düzenlenip önceki uygulamaya yapıştırılabiliyor; dinleme düğmeyle de (ana pencere, tepsi menüsü) başlatılabiliyor.
-- [ ] "Dinlemeyi başlat" düğmesi küçük pencerede de var.
-- [ ] Son çevirilerin listesi; uygulama yeniden açılınca da duruyor (SQLite).
+- [x] Düzenleme penceresi (Kopyala, Yapıştır, içine dikte), dinlemeyi başlatma düğmeleri (ana pencere, tepsi menüsü, küçük pencere, düzenleyici) ve geçmiş listesi (SQLite; Kopyala, Düzenle, Sil, Temizle).
 
 ### Faz 3 — Ayarlar
 - [ ] Kısayol, kısayol davranışı, mikrofon, yazma yöntemi ve sözlük ayarlardan değiştirilebiliyor. (Model seçimi yok: tek model large-v3.)
