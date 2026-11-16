@@ -8,15 +8,18 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `uv add <paket>`: bağımlılık ekler. `pip install` kullanma.
 - `uv run python spikes/gpu_check.py [--model large-v3-turbo]`: modeli GPU'da dener, hızı ve bellek kullanımını ölçer.
 - `uv run python spikes/mic_check.py [--list] [--device "USB PnP"] [--seconds 10]`: mikrofondan kayıt alır, seviyeyi ölçer, Türkçe yazıya çevirir.
+- `uv run python spikes/record_set.py [--device "USB PnP"] [--redo 5] [--status]`: `spikes/sentences_tr.txt` cümlelerini `recordings/set/` altına kaydeder.
+- `uv run python spikes/model_compare.py [--models large-v3 ...]`: kayıtları aday modellerle çevirir, `recordings/set/report.md` raporunu yazar.
 
 ## Nerede ne var
+- `docs/model-karsilastirma.md`: Faz 0.4 sonuçları, model kararı ve açık konular (ipucu metni, sözlük, uydurma metin).
 - `docs/plan.md`: onaylanmış plan. Kararların gerekçeleri, fazlar ve her denemenin geçme ölçütü burada.
 - `src/speak_to_print/`: uygulama kodu. `spikes/`: Faz 0 deneme betikleri (uygulamaya dahil değil); `spikes/data/` git dışı.
 - `src/speak_to_print/cuda_libs.py`: `preload_cuda_libraries()`, pip'ten gelen cuBLAS'ı `LD_LIBRARY_PATH` olmadan yükler. GPU'da model oluşturmadan önce çağrılmalı.
 
 ## Önemli kararlar (ayrıntı: `docs/plan.md`)
 - Python 3.14, uv'nin kendi kopyası (`[tool.uv] python-preference = "only-managed"`). Sistem Python'u kullanılmaz; pacman güncellemesi `.venv`'i bozmasın.
-- Konuşma tanıma: faster-whisper + ctranslate2, GPU'da (RTX 4070, 12 GB). Model, Faz 0.4'teki karşılaştırmayla seçilir.
+- Konuşma tanıma: faster-whisper + ctranslate2, GPU'da (RTX 4070, 12 GB). Varsayılan model `large-v3` (`float16`, `language="tr"`), kullanıcı seçti; `large-v3-turbo` ayarlardan seçilebilir ikinci model. Gerekçe ve ölçümler: `docs/model-karsilastirma.md`.
 - Arayüz ve mikrofon: PySide6 (Qt 6, QtMultimedia). Bağımlılık `pyside6-addons`; `pyside6` üst paketi gereksiz WebEngine'i de indiriyor. D-Bus: dbus-fast.
 - Global kısayol: XDG GlobalShortcuts portalı. Metni yazma: kwin-type ya da pano + yapıştırma tuşu (Faz 0.6'da seçilir).
 - Uygulama servis değildir: otomatik başlama yok, pencere kapanınca tamamen kapanır.
@@ -29,7 +32,8 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Kickoff'tan açılan program terminaldeki ortam değişkenlerini görmez.
 - Mikrofon yokken sistemin varsayılan ses kaynağı bir *monitor* olabilir; mikrofon sanılmamalı.
 - BTD 700 (Bluetooth) mikrofonu açıldıktan sonraki ilk yaklaşık yarım saniyeyi kaçırabiliyor; kayıt sırasında kulaklığın ses kalitesi de düşüyor. Kullanıcı ikisini de kabul etti: mikrofonu sürekli açık tutma ya da bu gecikmeyi gidermeye uğraşma.
-- Whisper kısık ya da uzak seste metin uydurabiliyor ("Altyazı M.K." gözlendi); boş sayılması gereken kayıtlar için önlem gerekli.
+- Whisper kısık ya da uzak seste metin uydurabiliyor ("Altyazı M.K." gözlendi); boş sayılması gereken kayıtlar için önlem gerekli. Modelin güven değerleri bunu ayırt etmiyor.
+- `language="tr"` ile tamamı İngilizce bir cümle Türkçeye çevriliyor; cümle içindeki İngilizce terimler ve kısa İngilizce cümleler ise korunuyor.
 - Modeller `~/.cache/huggingface`'ta durur; model dosyaları ve ses kayıtları git'e girmez.
 - Kullanıcının kabuğu fish: ortamı elle etkinleştirmek için `source .venv/bin/activate.fish`.
 

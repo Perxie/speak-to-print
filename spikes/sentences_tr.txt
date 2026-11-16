@@ -1,0 +1,30 @@
+# Faz 0.4 — model karşılaştırması için okunacak cümleler.
+#
+# Biçim:  cümle || terim1, terim2
+# "||" işaretinden sonra, cümlede geçen ve doğru yazılıp yazılmadığına
+# bakılacak İngilizce terimler yazılır. İngilizce terim yoksa "||" konmaz.
+# "#" ile başlayan satırlar ve boş satırlar atlanır.
+#
+# Kendi cümlelerinizi sona ekleyebilirsiniz. Kayda başladıktan sonra aradaki
+# satırları silmeyin ya da sırasını değiştirmeyin; kayıtlar sıra numarasıyla saklanır.
+
+Bugün öğleden sonra bir meeting var, ondan önce sunumu bitirmem lazım. || meeting
+Yeni feature için bir branch açtım, akşam pull request göndereceğim. || feature, branch, pull request
+Kodu commit etmeden önce testleri çalıştırmayı unutma. || commit
+Uygulamayı deploy ettikten sonra log dosyalarına baktım, bir hata yoktu. || deploy, log
+Backend tarafında bir bug bulduk, frontend ekibine haber verdim. || backend, bug, frontend
+Şifremi unuttuğum için hesabımı reset etmek zorunda kaldım. || reset
+Deadline cuma günü, o yüzden bu hafta biraz yoğunum. || deadline
+Müşteriden gelen feedback genel olarak olumluydu. || feedback
+Dosyayı download ettim ama açarken bir error verdi. || download, error
+Bu fonksiyonu refactor etmemiz gerekiyor, çok fazla tekrar var. || refactor
+Projeyi GitHub'a yükledim, linki sana mail ile gönderiyorum. || GitHub, link, mail
+Ekran kartının driver'ını güncelledikten sonra oyunlarda performans arttı. || driver
+Toplantıyı online yapalım mı, yoksa ofiste mi buluşalım? || online
+Database bağlantısı kopunca uygulama otomatik olarak yeniden bağlanıyor. || database
+PyCharm'da debug yaparken breakpoint koyduğum satırda durmadı. || PyCharm, debug, breakpoint
+API'den gelen response boş olduğu için ekranda hiçbir şey görünmüyordu. || API, response
+Linux'ta terminal kullanmayı yeni öğreniyorum, bazı komutları hâlâ karıştırıyorum. || Linux, terminal
+Cache'i temizleyip sayfayı refresh edince sorun düzeldi. || cache, refresh
+Çığ düştüğü için İzmir'e giden yol kapandı, şoförler ılık çay içip bekledi.
+Yarın sabah erken kalkıp spora gideceğim, akşam da arkadaşlarımla buluşacağım.
