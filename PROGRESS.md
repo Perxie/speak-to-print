@@ -5,7 +5,7 @@
 ## Şu an
 - Son yapılan: Güvenlik düzeltmelerinin hepsi bitti ve kullanıcı denedi (1–8, 9a, 9c; 9b'yi kullanıcı istemedi): pano yöntemi, geçmiş dosyası (`secure_delete`), tek kopya soketi oturum klasöründe, etiketler düz metin, model çıktısı tek satır, sürümler sabit, kayıt 10 dk sınırı, ses dosyaları özel klasörde, KWin araçlarına zaman aşımı, kişisel veri klasörleri 0700. Öncesinde v1.0.0 etiketlendi. Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
 - Yarım kalan: Yok. Güvenlik düzeltmelerinin ayrıntısı git dışındaki `SECURITY_AUDIT_claude.md`'nin sonunda.
-- Sıradaki: Optimizasyon (performans), kullanıcının onayıyla. Dönülecek nokta `v1.0.0`.
+- Sıradaki: Bu hâl `v1.1.0` olarak etiketlendi. Kullanıcının planı (güvenlikte yaptığı gibi): (1) kendi optimizasyon skill'ini çalıştıracak, (2) sonra skill'siz benden optimizasyon incelemesi isteyecek, (3) ikisini kıyaslayıp skill'ini geliştireceğiz, (4) ardından uygulamayı iyileştireceğiz. Kullanıcının istemesini bekle; skill'in raporunu görmeden kendi incelemene başlama. Dönülecek nokta `v1.1.0`.
 
 ## Yapılacaklar
 - [x] Faz 0 — Riskli parçaların denemeleri (GPU, mikrofon, model seçimi, kısayol, yazma yöntemi, odak almayan pencere).
