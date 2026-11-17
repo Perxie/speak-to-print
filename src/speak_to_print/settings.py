@@ -13,12 +13,17 @@ HOTKEY_MODES = ("toggle", "hold")  # bas başlat/bas bitir · basılı tut, konu
 OUTPUT_METHODS = ("auto", "clipboard")  # kwin-type (olmazsa pano) · her zaman pano
 
 
+def default_store() -> QSettings:
+    """Ayarların varsayılan yeri: ~/.config/speak-to-print/speak-to-print.conf."""
+    return QSettings("speak-to-print", "speak-to-print")
+
+
 class Settings(QObject):
     changed = Signal()
 
     def __init__(self, parent: QObject | None = None, store: QSettings | None = None) -> None:
         super().__init__(parent)
-        self._store = store or QSettings("speak-to-print", "speak-to-print")
+        self._store = store or default_store()
 
     # ------------------------------------------------------------ okuma / yazma
 

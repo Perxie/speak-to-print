@@ -3,9 +3,9 @@
 <!-- Bu dosya kısa kalır: "Şu an" bölümünün üstüne yazılır, biten maddeler birikince tek satırlık özete indirilir. -->
 
 ## Şu an
-- Son yapılan: Güvenlik 1–7. adımlar bitti ve kullanıcı denedi: pano yöntemi, geçmiş dosyası (`secure_delete`), tek kopya soketi oturum klasöründe, dışarıdan metin gösteren etiketler düz metin, model çıktısı tek satır, model/kwin-type/paket sürümleri sabit, kayıt 10 dk sınırı. Öncesinde v1.0.0 etiketlendi. Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
-- Yarım kalan: Güvenlik düzeltmeleri. Sıra, ayrıntılar ve her adımın durumu git dışındaki `SECURITY_AUDIT_claude.md`'nin sonundaki "Düzeltme sırası ve durumu" bölümünde (depo herkese açık: giderilmemiş açıkları buraya ya da commit'lere yazma). Kullanıcının `mia-security-check` skill'i iyileştirildi ve kuruldu.
-- Sıradaki: Kullanıcının onayıyla 8. adım. Sonra optimizasyon. Dönülecek nokta `v1.0.0`.
+- Son yapılan: Güvenlik düzeltmelerinin hepsi bitti ve kullanıcı denedi (1–8, 9a, 9c; 9b'yi kullanıcı istemedi): pano yöntemi, geçmiş dosyası (`secure_delete`), tek kopya soketi oturum klasöründe, etiketler düz metin, model çıktısı tek satır, sürümler sabit, kayıt 10 dk sınırı, ses dosyaları özel klasörde, KWin araçlarına zaman aşımı, kişisel veri klasörleri 0700. Öncesinde v1.0.0 etiketlendi. Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
+- Yarım kalan: Yok. Güvenlik düzeltmelerinin ayrıntısı git dışındaki `SECURITY_AUDIT_claude.md`'nin sonunda.
+- Sıradaki: Optimizasyon (performans), kullanıcının onayıyla. Dönülecek nokta `v1.0.0`.
 
 ## Yapılacaklar
 - [x] Faz 0 — Riskli parçaların denemeleri (GPU, mikrofon, model seçimi, kısayol, yazma yöntemi, odak almayan pencere).

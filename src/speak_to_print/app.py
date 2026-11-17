@@ -22,10 +22,11 @@ from .config import (EDITOR_GAP, EDITOR_SIZE, EDITOR_TITLE, POPUP_BOTTOM_MARGIN,
                      SHORTCUT_DESCRIPTION, SHORTCUT_ID)
 from .controller import Controller, Outcome, State
 from .history import History
+from .history import default_path as history_path
 from .hotkey import PortalHotkeys, Shortcut
 from .output import OutputError, clipboard_paste
 from .output.writer import TextWriter
-from .settings import Settings
+from .settings import Settings, default_store
 from .sounds import Sounds
 from .transcriber import Transcriber, Transcript
 from .ui import theme
@@ -58,6 +59,26 @@ def _setup_logging() -> None:
         handler.setFormatter(formatter)
     logging.basicConfig(level=logging.INFO, handlers=handlers)
     logging.getLogger("faster_whisper").setLevel(logging.WARNING)  # kütüphanenin ayrıntı satırları günlüğü doldurmasın
+
+
+def _private_dir(path: Path) -> Path:
+    """Klasörü yoksa oluşturur ve yalnızca bu kullanıcıya açar: klasör 0700, içindeki dosyalar 0600.
+
+    Ev klasörünün izni bir gün gevşerse (ya da klasör başka yere kopyalanırsa) diye ek
+    güvence. Klasördeki sembolik bağlara dokunulmaz: chmod bağı izler ve gösterdiği başka
+    bir dosyanın iznini değiştirirdi.
+    """
+    path.mkdir(parents=True, exist_ok=True)
+    path.chmod(0o700)
+    for entry in path.iterdir():
+        if not entry.is_symlink() and entry.is_file():
+            entry.chmod(0o600)
+    return path
+
+
+def _personal_data_dirs() -> list[Path]:
+    """Dikte geçmişinin, günlüğün ve ayarların (sözlük dahil) durduğu klasörler."""
+    return [history_path().parent, log_file_path().parent, Path(default_store().fileName()).parent]
 
 
 def _instance_socket_path() -> str | None:
@@ -463,6 +484,11 @@ def main() -> int:
     if args.uninstall:
         return _uninstall()
     _setup_logging()
+    for folder in _personal_data_dirs():
+        try:
+            _private_dir(folder)
+        except OSError as error:
+            log.warning("Klasör izni daraltılamadı (%s): %s", folder, error)
 
     app = QApplication(sys.argv)
     app.setApplicationName(desktop_entry.APP_NAME)
