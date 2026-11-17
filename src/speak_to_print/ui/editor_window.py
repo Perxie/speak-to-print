@@ -42,6 +42,7 @@ class EditorWindow(Card):
         title = QLabel("Metni düzenle")
         title.setFont(theme.ui_font(15, 600))
         self.note = QLabel(HINT)
+        self.note.setTextFormat(Qt.TextFormat.PlainText)  # dışarıdan gelen metin: HTML gibi yorumlanmasın
         self.note.setFont(theme.ui_font(12, 400))
         self.note.setStyleSheet(f"color: {theme.LEAD};")
         self.note.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)

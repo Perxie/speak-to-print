@@ -58,6 +58,7 @@ class ListeningPopup(Card):
         self._time.setFont(theme.ui_font(15, 500))
         self._time.setStyleSheet(f"color: {theme.LEAD};")
         self.note = QLabel()
+        self.note.setTextFormat(Qt.TextFormat.PlainText)  # dışarıdan gelen metin: HTML gibi yorumlanmasın
         self.note.setFont(theme.ui_font(12, 400))
         self.note.setStyleSheet(f"color: {theme.LEAD};")
         self.note.setWordWrap(True)
@@ -76,6 +77,7 @@ class ListeningPopup(Card):
         crop_layout.setContentsMargins(12, 6, 6, 6)
         crop_layout.addWidget(self.text)
         self._message = QLabel()
+        self._message.setTextFormat(Qt.TextFormat.PlainText)  # dışarıdan gelen metin: HTML gibi yorumlanmasın
         self._message.setFont(theme.ui_font(15, 500))
         self._message.setWordWrap(True)
         self._message.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)

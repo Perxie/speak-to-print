@@ -9,6 +9,7 @@ Görsel dil için bkz. docs/tasarim.md.
 
 from __future__ import annotations
 
+from PySide6 import QtGui
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMessageBox, QPushButton,
                                QVBoxLayout, QWidget)
@@ -36,6 +37,14 @@ def _summary(entry: Entry) -> str:
     if len(text) > PREVIEW_LENGTH:
         text = text[: PREVIEW_LENGTH - 1] + "…"
     return f"{entry.created_at:%d.%m %H:%M}  {text}"
+
+
+def _literal_tooltip(text: str) -> str:
+    """İpucu balonu HTML'ye benzeyen metni biçimli gösterir; dikte yazıldığı gibi görünsün.
+
+    Benzemeyen metin zaten düz gösterildiği için olduğu gibi bırakılır.
+    """
+    return QtGui.Qt.convertFromPlainText(text) if QtGui.Qt.mightBeRichText(text) else text
 
 
 class MainWindow(QWidget):
@@ -67,6 +76,7 @@ class MainWindow(QWidget):
                                       "küçük pencerede gösterilir, oradan kopyalayabilir, düzenleyebilir ya da yapıştırabilirsiniz.")
         theme.set_kind(self.listen_button, "primary")
         self.detail = QLabel()
+        self.detail.setTextFormat(Qt.TextFormat.PlainText)  # dışarıdan gelen metin: HTML gibi yorumlanmasın
         self.detail.setWordWrap(True)
         self.detail.setFont(theme.ui_font(13, 400))
         self.detail.setStyleSheet(f"color: {theme.LEAD};")
@@ -75,6 +85,7 @@ class MainWindow(QWidget):
 
         # Kısayol satırı.
         self.shortcut = QLabel("Kısayol")
+        self.shortcut.setTextFormat(Qt.TextFormat.PlainText)  # dışarıdan gelen metin: HTML gibi yorumlanmasın
         self.shortcut.setFont(theme.ui_font(13, 500))
         self.shortcut.setStyleSheet(f"color: {theme.LEAD};")
         self._keycap = Keycap("bekleniyor")
@@ -260,7 +271,7 @@ class MainWindow(QWidget):
     def _item(self, entry: Entry) -> QListWidgetItem:
         item = QListWidgetItem(_summary(entry))
         item.setData(Qt.ItemDataRole.UserRole, entry)
-        item.setToolTip(entry.text)
+        item.setToolTip(_literal_tooltip(entry.text))
         return item
 
     def _selected(self) -> Entry | None:

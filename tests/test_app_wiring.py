@@ -7,7 +7,8 @@ Dayandıkları adlar (ör. `popup.pause_button`, `popup.text`) arayüz sınıfla
 import numpy as np
 import pytest
 from PySide6.QtCore import QEvent, QPointF, QSettings, Qt
-from PySide6.QtGui import QMouseEvent
+from PySide6 import QtGui
+from PySide6.QtGui import QMouseEvent, QTextDocument
 from PySide6.QtWidgets import QApplication
 
 from fakes import FakeRecorder, FakeTranscriber
@@ -218,3 +219,48 @@ def test_settings_dialog_writes_settings(env):
     env.release()
     env.result("Sözlükle.")
     assert env.transcriber.vocabulary == ["commit", "refactor"]
+
+
+MARKUP = '<b>Kalın</b> <a href="https://ornek.invalid">bağlantı</a>'
+
+
+def _labels_with_outside_text(app):
+    """Dışarıdan gelen metni (model çıktısı, aygıt adı, hata iletisi) gösteren etiketler."""
+    return {
+        "ana pencere açıklama": app.window.detail,
+        "ana pencere kısayol": app.window.shortcut,
+        "küçük pencere not": app.popup.note,
+        "küçük pencere ileti": app.popup._message,
+        "düzenleyici not": app.editor.note,
+    }
+
+
+def test_labels_with_outside_text_show_markup_literally(env):
+    env.press()
+    env.press()
+    env.recorder.finished.emit(AUDIO)
+    env.transcriber.done.emit(Transcript("", MARKUP, 0.2, 1.0))  # uydurma metin alıkondu
+    env.app.window.set_shortcut_error(MARKUP)
+    env.app.editor.show_note(MARKUP)
+    for name, label in _labels_with_outside_text(env.app).items():
+        assert label.textFormat() == Qt.TextFormat.PlainText, name
+
+
+def _tooltip_as_shown(tooltip):
+    # QToolTip, HTML'ye benzeyen metni biçimli, ötekini düz gösterir.
+    document = QTextDocument()
+    if QtGui.Qt.mightBeRichText(tooltip):
+        document.setHtml(tooltip)
+    else:
+        document.setPlainText(tooltip)
+    return document.toPlainText()
+
+
+def test_history_tooltip_shows_markup_literally(env):
+    env.dictate(MARKUP)
+    assert _tooltip_as_shown(env.app.window.history.item(0).toolTip()) == MARKUP
+
+
+def test_history_tooltip_of_plain_text_is_unchanged(env):
+    env.dictate("Düz bir cümle, 3 < 5.")
+    assert env.app.window.history.item(0).toolTip() == "Düz bir cümle, 3 < 5."
