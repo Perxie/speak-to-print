@@ -14,6 +14,7 @@ Kickoff kaydını ve KWin kurallarını tek komutla kaldırmak için: `uv run sp
 | Ne | Nerede | Boyut | Silmek için |
 |---|---|---|---|
 | Konuşma tanıma modeli (large-v3) | `~/.cache/huggingface/hub/models--Systran--faster-whisper-large-v3` ve `~/.cache/huggingface/hub/blobs` | 3,1 GB | `uv run hf cache rm model/Systran/faster-whisper-large-v3` |
+| Uygulama simgesi (simge temasında, kimlikle) | `~/.local/share/icons/hicolor/scalable/apps/io.github.perxie.SpeakToPrint.svg` | küçük | `uv run speak-to-print --uninstall` |
 | Kickoff menü kaydı ve portal uygulama kimliği | `~/.local/share/applications/io.github.perxie.SpeakToPrint.desktop` | küçük | dosyayı silin (uygulama her açılışta yeniden yazar) |
 | KDE'de bu uygulamaya atanmış global kısayol (Shift+Pause) | KDE Sistem Ayarları → Klavye → Kısayollar → "Speak to Print" (`~/.config/kglobalshortcutsrc`) | küçük | Sistem Ayarları'ndan kısayolu kaldırın |
 | kwin-type programı (metni pencereye yazar) | `~/.local/bin/kwin-type` | 22 KB | dosyayı silin |

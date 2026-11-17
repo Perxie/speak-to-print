@@ -2,64 +2,14 @@
 
 import numpy as np
 import pytest
-from PySide6.QtCore import QObject, Signal
-
 from speak_to_print.config import SAMPLE_RATE
 from speak_to_print.controller import Controller, State
 from speak_to_print.output import OutputError
 from speak_to_print.transcriber import Transcript
 
+from fakes import FakeRecorder, FakeSettings, FakeTranscriber
+
 ONE_SECOND = np.zeros(SAMPLE_RATE, dtype=np.float32)
-
-
-class FakeRecorder(QObject):
-    level = Signal(float)
-    finished = Signal(object)
-    failed = Signal(str)
-
-    def __init__(self):
-        super().__init__()
-        self.calls = []
-        self.start_ok = True
-
-    def start(self):
-        self.calls.append("start")
-        if not self.start_ok:
-            self.failed.emit("Mikrofon bulunamadı.")
-        return self.start_ok
-
-    def set_paused(self, paused):
-        self.calls.append(f"paused={paused}")
-
-    def stop(self):
-        self.calls.append("stop")
-
-    def cancel(self):
-        self.calls.append("cancel")
-
-
-class FakeTranscriber(QObject):
-    ready = Signal(float, str)
-    load_failed = Signal(str)
-    done = Signal(object)
-    failed = Signal(str)
-
-    def __init__(self):
-        super().__init__()
-        self.requests = []
-
-    def load(self):
-        self.requests.append("load")
-
-    def transcribe(self, samples, use_prompt, vocabulary):
-        self.requests.append(("transcribe", len(samples), use_prompt))
-        self.vocabulary = vocabulary
-
-
-class FakeSettings:
-    auto_paste = True
-    use_prompt = True
-    vocabulary: list = []
 
 
 class Harness:

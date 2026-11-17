@@ -57,10 +57,10 @@ Bu depoda yalnızca kod ve belgeler var. Model, Python ortamı, ayarlarınız ve
 
    İlk açılışta uygulama:
    - konuşma tanıma modelini indirir (yaklaşık 3 GB, bir kez),
-   - Kickoff menüsüne "Speak to Print" kaydını ekler,
+   - Kickoff menüsüne "Speak to Print" kaydını ve simgesini ekler,
    - küçük pencereler için iki KWin pencere kuralı yazar.
 
-7. Kısayolu atayın: **Ayarlar… → Kısayol → Değiştir…**. Harf içermeyen bir tuş seçin
+7. Kısayolu atayın: ana penceredeki **Tuş seç** (ya da **Ayarlar → Kısayol → Değiştir**). Harf içermeyen bir tuş seçin
    (ör. Shift+Pause); Ctrl+Pause çalışmaz.
 
 Bundan sonra uygulamayı Kickoff'tan "Speak to Print" diye açabilirsiniz.
@@ -84,7 +84,7 @@ uv sync
 uv run speak-to-print --uninstall
 ```
 
-Kickoff kaydını ve KWin kurallarını kaldırır. Proje dışında kalan her şeyin (model, ayarlar,
+Kickoff kaydını, simgeyi ve KWin kurallarını kaldırır. Proje dışında kalan her şeyin (model, ayarlar,
 geçmiş, günlük) listesi ve silme yolları: [docs/proje-disi-dosyalar.md](docs/proje-disi-dosyalar.md).
 
 ## Geliştirme

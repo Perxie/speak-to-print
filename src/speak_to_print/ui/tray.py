@@ -8,36 +8,31 @@ from PySide6.QtWidgets import QMenu, QSystemTrayIcon
 
 from ..controller import State
 from ..desktop_entry import APP_NAME
+from . import theme
 
 COLORS = {
-    State.LOADING: "#7f8c8d",
-    State.IDLE: "#eff0f1",
-    State.LISTENING: "#ed1515",
-    State.PAUSED: "#f39c12",
-    State.TRANSCRIBING: "#3daee9",
-    State.FAILED: "#7f8c8d",
+    State.LOADING: theme.LEAD,
+    State.IDLE: theme.PAPER,
+    State.LISTENING: theme.MAGENTA,
+    State.PAUSED: theme.LEAD,
+    State.TRANSCRIBING: theme.CYAN,
+    State.FAILED: theme.RED,
 }
+
+# Uygulamanın işareti: ses çizgisinden beş çizgi (x, yükseklik); 64×64'lük bir karede.
+BARS = ((10, 12), (20, 28), (30, 42), (40, 22), (50, 10))
 
 
 def state_icon(state: State) -> QIcon:
-    """Durum rengine boyanmış basit bir mikrofon simgesi çizer (simge temasına bağlı kalmamak için)."""
+    """Durum rengine boyanmış ses çizgisi simgesi (simge temasına bağlı kalmamak için kodla çizilir)."""
     pixmap = QPixmap(64, 64)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    color = QColor(COLORS[state])
     painter.setPen(Qt.PenStyle.NoPen)
-    painter.setBrush(color)
-    painter.drawRoundedRect(QRectF(22, 6, 20, 34), 10, 10)  # mikrofonun gövdesi
-    pen = painter.pen()
-    pen.setStyle(Qt.PenStyle.SolidLine)
-    pen.setColor(color)
-    pen.setWidth(5)
-    painter.setPen(pen)
-    painter.setBrush(Qt.BrushStyle.NoBrush)
-    painter.drawArc(QRectF(13, 14, 38, 34), 180 * 16, 180 * 16)  # alttaki yay
-    painter.drawLine(32, 48, 32, 58)  # sap
-    painter.drawLine(22, 58, 42, 58)  # taban
+    painter.setBrush(QColor(COLORS[state]))
+    for x, height in BARS:
+        painter.drawRoundedRect(QRectF(x - 1, 32 - height / 2, 8, height), 4, 4)
     painter.end()
     return QIcon(pixmap)
 

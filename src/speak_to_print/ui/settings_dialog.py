@@ -1,15 +1,41 @@
-"""Ayarlar penceresi. Değişiklikler anında uygulanır ve kaydedilir; ayrı bir "Kaydet" düğmesi yoktur."""
+"""Ayarlar penceresi. Değişiklikler anında uygulanır ve kaydedilir; ayrı bir "Kaydet" düğmesi yoktur.
+
+Dört bölüm: kısayol, ses, metin ve sözlük. Görsel dil için bkz. docs/tasarim.md.
+"""
 
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtMultimedia import QMediaDevices
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QHBoxLayout, QLabel, QPlainTextEdit, QPushButton,
-                               QRadioButton, QSlider, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QComboBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QRadioButton, QSlider,
+                               QVBoxLayout, QWidget)
 
 from ..audio import default_microphone, device_id, microphones
 from ..desktop_entry import APP_NAME
 from ..settings import Settings
+from . import theme
+from .widgets import CropFrame, Keycap, PrintedText, Rule, Switch
+
+
+def _title(text: str) -> QLabel:
+    label = QLabel(text)
+    label.setFont(theme.ui_font(15, 600))
+    return label
+
+
+def _label(text: str) -> QLabel:
+    label = QLabel(text)
+    label.setFont(theme.ui_font(13, 500))
+    label.setStyleSheet(f"color: {theme.LEAD};")
+    return label
+
+
+def _help(text: str) -> QLabel:
+    label = QLabel(text)
+    label.setFont(theme.ui_font(12, 400))
+    label.setStyleSheet(f"color: {theme.LEAD};")
+    label.setWordWrap(True)
+    return label
 
 
 class SettingsDialog(QWidget):
@@ -21,70 +47,106 @@ class SettingsDialog(QWidget):
         self._settings = settings
         self._refreshing = False
         self.setWindowTitle(f"{APP_NAME} — Ayarlar")
-        self.resize(560, 560)
+        self.resize(600, 790)
+        self.setMinimumSize(520, 760)
 
         # Kısayol
-        self.shortcut = QLabel("bekleniyor…")
-        self.shortcut_button = QPushButton("Değiştir…")
-        shortcut_row = QHBoxLayout()
-        shortcut_row.addWidget(self.shortcut, 1)
-        shortcut_row.addWidget(self.shortcut_button)
+        self.shortcut = Keycap("bekleniyor")
+        self.shortcut_button = QPushButton("Değiştir")
         self.mode_toggle = QRadioButton("Bas başlat, tekrar bas bitir")
         self.mode_hold = QRadioButton("Basılı tutarken dinle, bırakınca bitir")
-        mode_box = QVBoxLayout()
-        mode_box.addWidget(self.mode_toggle)
-        mode_box.addWidget(self.mode_hold)
 
-        # Mikrofon ve yazma yöntemi
+        # Ses
         self.microphone = QComboBox()
+        self.sounds = Switch("Dinleme başlarken ve biterken kısa bir ses çal")
+        self.sound_volume = QSlider(Qt.Orientation.Horizontal)
+        self.sound_volume.setRange(5, 100)
+        self.sound_volume.setFixedWidth(160)
+        self.sound_volume.setToolTip("Ses yüksekliği")
+        self.test_sound_button = QPushButton("Sesi dene")
+
+        # Metin
         self.output_method = QComboBox()
         self.output_method.addItem("kwin-type (önerilen; çalışmazsa panoya geçer)", "auto")
         self.output_method.addItem("Pano + Shift+Insert (her zaman)", "clipboard")
-
-        # Seçenekler
-        self.auto_paste = QCheckBox("Çevrilen metni imlecin olduğu yere kendiliğinden yaz")
-        self.use_prompt = QCheckBox("Noktalama ipucu: modele noktalı bir örnek metin ver")
-        self.keep_history = QCheckBox("Dikte edilen metinleri geçmişe kaydet")
+        self.auto_paste = Switch("Çevrilen metni imlecin olduğu yere kendiliğinden yaz")
+        self.use_prompt = Switch("Noktalama ipucu: modele noktalı bir örnek metin ver")
+        self.keep_history = Switch("Dikte edilen metinleri geçmişe kaydet")
         self.keep_history.setToolTip("Kapalıyken yeni dikteler kaydedilmez; var olan kayıtlar silinmez.")
-        self.sounds = QCheckBox("Dinleme başlarken ve biterken kısa bir ses çal")
-        self.test_sound_button = QPushButton("Sesi dene")
-        self.sound_volume = QSlider(Qt.Orientation.Horizontal)
-        self.sound_volume.setRange(5, 100)
-        self.sound_volume.setFixedWidth(140)
-        self.sound_volume.setToolTip("Ses yüksekliği")
-        sounds_row = QHBoxLayout()
-        sounds_row.addWidget(self.sounds, 1)
-        sounds_row.addWidget(QLabel("Yükseklik:"))
-        sounds_row.addWidget(self.sound_volume)
-        sounds_row.addWidget(self.test_sound_button)
 
         # Sözlük
-        self.vocabulary = QPlainTextEdit()
-        self.vocabulary.setPlaceholderText("Her satıra bir terim. Örnek:\ncommit\nrefactor\npull request")
-        vocabulary_help = QLabel("Yanlış yazıldığını gördüğünüz terimleri buraya ekleyin; model bu yazımları önceden "
-                                 "görür ve onlara yönelir. Liste kısa kaldıkça işe yarıyor: denemede 3 terim hepsini "
-                                 "düzeltti, 31 terimlik liste hiçbirini düzeltmedi.")
-        vocabulary_help.setWordWrap(True)
+        self.vocabulary = PrintedText()
+        self.vocabulary.setPlaceholderText("Her satıra bir terim: commit, refactor, pull request…")
+        vocabulary_frame = CropFrame()
+        vocabulary_frame.set_mark_color(theme.YELLOW)
+        vocabulary_frame.setMinimumHeight(110)
+        frame_layout = QVBoxLayout(vocabulary_frame)
+        frame_layout.setContentsMargins(12, 6, 6, 6)
+        frame_layout.addWidget(self.vocabulary)
 
-        form = QFormLayout()
-        form.addRow("Kısayol:", shortcut_row)
-        form.addRow("Kısayol davranışı:", mode_box)
-        form.addRow("Mikrofon:", self.microphone)
-        form.addRow("Yazma yöntemi:", self.output_method)
         close_button = QPushButton("Kapat")
+        for button in (self.shortcut_button, self.test_sound_button, close_button):
+            button.setFont(theme.ui_font(13, 600))
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+        for widget in (self.mode_toggle, self.mode_hold, self.microphone, self.output_method):
+            widget.setFont(theme.ui_font(13, 500))
+        for combo in (self.microphone, self.output_method):
+            combo.setMinimumHeight(34)  # pencere daralınca açılır kutular ezilmesin
+
+        shortcut_row = QHBoxLayout()
+        shortcut_row.setSpacing(8)
+        shortcut_row.addWidget(self.shortcut)
+        shortcut_row.addWidget(self.shortcut_button)
+        shortcut_row.addStretch(1)
+        modes = QVBoxLayout()
+        modes.setSpacing(6)
+        modes.addWidget(self.mode_toggle)
+        modes.addWidget(self.mode_hold)
+        volume_row = QHBoxLayout()
+        volume_row.setSpacing(10)
+        volume_row.addWidget(self.sound_volume)
+        volume_row.addWidget(self.test_sound_button)
+        volume_row.addStretch(1)
+
+        def section(title: str, rows: list[tuple[str, object]]) -> QVBoxLayout:
+            """Başlık ve altında "etiket: bileşen" satırları. Etiketi boş olan satır tam genişlikte durur."""
+            box = QVBoxLayout()
+            box.setSpacing(10)
+            box.addWidget(_title(title))
+            grid = QGridLayout()
+            grid.setHorizontalSpacing(16)
+            grid.setVerticalSpacing(10)
+            grid.setColumnMinimumWidth(0, 120)
+            grid.setColumnStretch(1, 1)
+            for row, (label, content) in enumerate(rows):
+                if label:
+                    grid.addWidget(_label(label), row, 0, Qt.AlignmentFlag.AlignTop)
+                column, span = (1, 1) if label else (0, 2)
+                if isinstance(content, QWidget):
+                    grid.addWidget(content, row, column, 1, span)
+                else:
+                    grid.addLayout(content, row, column, 1, span)
+            box.addLayout(grid)
+            return box
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 20, 24, 18)
+        layout.setSpacing(14)
+        layout.addLayout(section("Kısayol", [("Tuş", shortcut_row), ("Davranış", modes)]))
+        layout.addWidget(Rule())
+        layout.addLayout(section("Ses", [("Mikrofon", self.microphone), ("", self.sounds), ("Yükseklik", volume_row)]))
+        layout.addWidget(Rule())
+        layout.addLayout(section("Metin", [("Yazma yöntemi", self.output_method), ("", self.auto_paste),
+                                           ("", self.use_prompt), ("", self.keep_history)]))
+        layout.addWidget(Rule())
+        layout.addWidget(_title("Sözlük"))
+        layout.addWidget(_help("Yanlış yazıldığını gördüğünüz terimleri buraya ekleyin; model bu yazımları önceden görür "
+                               "ve onlara yönelir. Liste kısa kaldıkça işe yarıyor: denemede 3 terim hepsini düzeltti, "
+                               "31 terimlik liste hiçbirini düzeltmedi."))
+        layout.addWidget(vocabulary_frame, 1)
         bottom = QHBoxLayout()
         bottom.addStretch(1)
         bottom.addWidget(close_button)
-
-        layout = QVBoxLayout(self)
-        layout.addLayout(form)
-        layout.addWidget(self.auto_paste)
-        layout.addWidget(self.use_prompt)
-        layout.addWidget(self.keep_history)
-        layout.addLayout(sounds_row)
-        layout.addWidget(QLabel("Sözlük:"))
-        layout.addWidget(vocabulary_help)
-        layout.addWidget(self.vocabulary, 1)
         layout.addLayout(bottom)
 
         self.shortcut_button.clicked.connect(self.configure_shortcut_clicked)
@@ -108,7 +170,7 @@ class SettingsDialog(QWidget):
         self.refresh()
 
     def set_shortcut(self, trigger: str) -> None:
-        self.shortcut.setText(trigger or "atanmamış")
+        self.shortcut.set_text(trigger or "atanmamış", muted=not trigger)
 
     def open(self) -> None:
         self.refresh()

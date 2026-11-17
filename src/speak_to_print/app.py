@@ -12,7 +12,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PySide6.QtCore import QObject, Qt, QTimer
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import QApplication
 
@@ -28,6 +28,7 @@ from .output.writer import TextWriter
 from .settings import Settings
 from .sounds import Sounds
 from .transcriber import Transcriber, Transcript
+from .ui import theme
 from .ui.editor_window import EditorWindow
 from .ui.listening_popup import ListeningPopup
 from .ui.main_window import MainWindow
@@ -99,7 +100,7 @@ def _prepare_system_integration() -> None:
 
 def _uninstall() -> int:
     """Uygulamanın sisteme eklediği kayıtları kaldırır; kişisel verilere ve modele dokunmaz."""
-    print("Kickoff kaydı:", "kaldırıldı" if desktop_entry.uninstall() else "zaten yok")
+    print("Kickoff kaydı ve simge:", "kaldırıldı" if desktop_entry.uninstall() else "zaten yok")
     print("KWin kuralı (dinleme penceresi):", "kaldırıldı" if kwin_rules.remove_popup_rule() else "zaten yok")
     print("KWin kuralı (düzenleme penceresi):", "kaldırıldı" if kwin_rules.remove_editor_rule() else "zaten yok")
     print("\nDokunulmayanlar (isterseniz elle silin; tam liste: docs/proje-disi-dosyalar.md):")
@@ -126,6 +127,9 @@ class Application(QObject):
         app_has_focus: Callable[[], bool] | None = None,
         history: History | None = None,
         on_quit: Callable[[], None] | None = None,
+        recorder: Recorder | None = None,
+        transcriber: Transcriber | None = None,
+        copy_text: Callable[[str], None] | None = None,
     ) -> None:
         super().__init__()
         # "Pencerelerimizden biri klavye odağında mı?" sorusu.
@@ -138,8 +142,9 @@ class Application(QObject):
         self._quitting = False
         self.settings = settings or Settings()
         self._writer = TextWriter(lambda: self.settings.output_method) if write_text is None else None
-        self.recorder = Recorder()
-        self.transcriber = Transcriber()
+        self.recorder = recorder or Recorder()
+        self.transcriber = transcriber or Transcriber()
+        self._copy_text = copy_text or clipboard_paste.copy_text
         self.controller = Controller(
             self.recorder, self.transcriber,
             write_text or self._writer.write,  # type: ignore[union-attr]
@@ -245,7 +250,7 @@ class Application(QObject):
         if not text:
             return
         try:
-            clipboard_paste.copy_text(text)
+            self._copy_text(text)
             log.info("Metin panoya kopyalandı (%d karakter).", len(text))
             self.popup.show_copied()
             self.editor.show_note("Panoya kopyalandı.")
@@ -375,7 +380,10 @@ class Application(QObject):
 
     def _on_notice(self, text: str) -> None:
         log.info("Bilgi: %s", text)
-        self.popup.show_notice(text)
+        # Sorun bildiren iletiler küçük pencerede ayrı renkle gösterilir.
+        problem = any(word in text for word in ("kayboldu", "bulunamadı", "hatası", "yüklenemediği", "desteklemiyor",
+                                                "açılamadı", "bağlı değil"))
+        self.popup.show_notice(text, problem)
         self.window.show_notice(text)
 
     def _on_bound(self, triggers: dict) -> None:
@@ -425,7 +433,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="speak-to-print", description="Yerel dikte uygulaması.")
     parser.add_argument("--quit-after", type=float, help=argparse.SUPPRESS)  # yalnızca otomatik denemeler için
     parser.add_argument("--uninstall", action="store_true",
-                        help="Kickoff kaydını ve KWin pencere kurallarını kaldırır (ayarlar, geçmiş ve model kalır)")
+                        help="Kickoff kaydını, simgeyi ve KWin pencere kurallarını kaldırır (ayarlar, geçmiş ve model kalır)")
     args = parser.parse_args()
     if args.uninstall:
         return _uninstall()
@@ -435,6 +443,8 @@ def main() -> int:
     app.setApplicationName(desktop_entry.APP_NAME)
     QGuiApplication.setDesktopFileName(desktop_entry.APP_ID)  # pencereleri .desktop kaydıyla eşleştirir
     app.setQuitOnLastWindowClosed(False)  # küçük pencere gizlenince uygulama kapanmasın
+    theme.apply(app)
+    app.setWindowIcon(QIcon(str(desktop_entry.ICON_PATH)))
 
     if _already_running():
         log.info("Uygulama zaten açık; açık olan pencere gösterildi.")

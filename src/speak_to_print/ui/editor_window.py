@@ -7,23 +7,25 @@ pencere kuralıyla sağlanır (kwin_rules.ensure_editor_rule).
 
 Bu pencere odaktayken yapılan yeni bir dikte, metnin içine, imlecin olduğu
 yere yazılır.
+
+Görsel dil için bkz. docs/tasarim.md.
 """
 
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QKeySequence, QShortcut, QTextCursor
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from ..config import EDITOR_SIZE, EDITOR_TITLE
 from ..controller import State
-from .listening_popup import STYLE
+from . import theme
+from .widgets import Card, CropFrame, PrintedText
+
+HINT = "Ctrl+Enter yapıştırır, Esc kapatır"
 
 
-HINT = "Ctrl+Enter: yapıştır   Esc: kapat"
-
-
-class EditorWindow(QWidget):
+class EditorWindow(Card):
     listen_clicked = Signal()  # dikteyi başlat / bitir; metin bu pencereye, imlecin olduğu yere yazılır
     paste_clicked = Signal(str)  # düzenlenmiş metin, önceki uygulamaya yazılsın
     copy_clicked = Signal(str)
@@ -31,19 +33,27 @@ class EditorWindow(QWidget):
 
     def __init__(self) -> None:
         super().__init__()
-        self.setObjectName("popup")  # dinleme penceresiyle aynı görünüm
         self.setWindowTitle(EDITOR_TITLE)
         self.setWindowFlags(Qt.WindowType.Window | Qt.WindowType.FramelessWindowHint
                             | Qt.WindowType.WindowStaysOnTopHint)
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
+        theme.prepare_frameless(self)
         self.setFixedSize(*EDITOR_SIZE)
-        self.setStyleSheet(STYLE)
 
         title = QLabel("Metni düzenle")
-        title.setObjectName("status")
+        title.setFont(theme.ui_font(15, 600))
         self.note = QLabel(HINT)
-        self.note.setObjectName("note")
-        self.text = QPlainTextEdit()
+        self.note.setFont(theme.ui_font(12, 400))
+        self.note.setStyleSheet(f"color: {theme.LEAD};")
+        self.note.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+
+        self.text = PrintedText()
+        self.text.setPlaceholderText("Yazın ya da “Dinlemeyi başlat”a basıp konuşun.")
+        self._crop = CropFrame()
+        self._crop.set_mark_color(theme.YELLOW)  # düzenlenebilir alan: eylem rengi
+        crop_layout = QVBoxLayout(self._crop)
+        crop_layout.setContentsMargins(12, 6, 6, 6)
+        crop_layout.addWidget(self.text)
+
         self.listen_button = QPushButton("Dinlemeyi başlat")
         self.listen_button.setToolTip("Konuştuklarınız bu metnin içine, imlecin olduğu yere yazılır.")
         # Düğme klavye odağını almasın: odak metin alanında kalmalı ki dikte oraya yazılsın.
@@ -52,25 +62,32 @@ class EditorWindow(QWidget):
         self.paste_button = QPushButton("Yapıştır")
         self.paste_button.setToolTip("Bu pencereyi kapatır ve metni önceki uygulamada imlecin olduğu yere yazar.")
         self.close_button = QPushButton("Kapat")
+        theme.set_kind(self.paste_button, "primary")
+        theme.set_kind(self.close_button, "quiet")
+        for button in (self.listen_button, self.copy_button, self.paste_button, self.close_button):
+            button.setFont(theme.ui_font(13, 600))
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
 
         top = QHBoxLayout()
-        top.addWidget(title, 1)
-        top.addWidget(self.note)
+        top.addWidget(title)
+        top.addWidget(self.note, 1)
         buttons = QHBoxLayout()
+        buttons.setSpacing(6)
         buttons.addWidget(self.listen_button)
         buttons.addStretch(1)
         for button in (self.copy_button, self.paste_button, self.close_button):
             buttons.addWidget(button)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setContentsMargins(18, 13, 18, 14)
+        layout.setSpacing(9)
         layout.addLayout(top)
-        layout.addWidget(self.text, 1)
+        layout.addWidget(self._crop, 1)
         layout.addLayout(buttons)
 
         self.text.textChanged.connect(lambda: self.text_edited.emit(self.text.toPlainText()))
         self.text.textChanged.connect(lambda: self.note.setText(HINT))  # eski uyarı kalmasın
-        self.copy_button.clicked.connect(lambda: self.copy_clicked.emit(self.text.toPlainText()))
         self.listen_button.clicked.connect(self.listen_clicked)
+        self.copy_button.clicked.connect(lambda: self.copy_clicked.emit(self.text.toPlainText()))
         self.paste_button.clicked.connect(self._paste)
         self.close_button.clicked.connect(self.hide)
         for keys, action in (("Ctrl+Return", self._paste), ("Ctrl+Enter", self._paste), ("Escape", self.hide)):
@@ -90,7 +107,8 @@ class EditorWindow(QWidget):
         self.text.setFocus()
 
     def set_state(self, state: State) -> None:
-        self.listen_button.setText("Bitir" if state in (State.LISTENING, State.PAUSED) else "Dinlemeyi başlat")
+        listening = state in (State.LISTENING, State.PAUSED)
+        self.listen_button.setText("Bitir" if listening else "Dinlemeyi başlat")
         self.listen_button.setEnabled(state in (State.IDLE, State.LISTENING, State.PAUSED))
 
     def show_note(self, text: str) -> None:

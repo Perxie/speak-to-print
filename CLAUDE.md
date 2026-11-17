@@ -6,11 +6,12 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `uv sync`: `.venv`'i `pyproject.toml` ve `uv.lock`'a göre kurar ya da günceller.
 - `uv run speak-to-print`: uygulamayı çalıştırır. Günlüğü: `~/.local/state/speak-to-print/speak-to-print.log` (durumlar, süreler, yazma yöntemi; dikte edilen metin yazılmaz). Kullanıcı denemelerinden sonra sonucu buradan oku.
 - `uv add <paket>`: bağımlılık ekler. `pip install` kullanma.
-- `uv run speak-to-print --uninstall`: Kickoff kaydını ve KWin pencere kurallarını kaldırır (ayarlar, geçmiş, günlük ve model kalır).
+- `uv run speak-to-print --uninstall`: Kickoff kaydını, simgeyi ve KWin pencere kurallarını kaldırır (ayarlar, geçmiş, günlük ve model kalır).
 - `uv run pytest`: birim testleri (durum makinesi, uydurma metin önlemi); ekran, mikrofon ve model gerektirmez.
 
 ## Nerede ne var
 - `README.md`: yeni bir bilgisayara kurulum, güncelleme ve kaldırma adımları (kullanıcı için). Kurulum adımları değişirse burayı da güncelle.
+- `docs/tasarim.md`: görsel dil (matbaa fikri, renkler, yazı tipleri, ilkeler). Arayüze dokunmadan önce oku.
 - `docs/model-karsilastirma.md`: Faz 0.4 sonuçları, model kararı ve açık konular (ipucu metni, sözlük, uydurma metin).
 - `docs/plan.md`: onaylanmış plan. Kararların gerekçeleri, fazlar ve her denemenin geçme ölçütü burada.
 - `src/speak_to_print/`: uygulama kodu. `tests/`: birim testleri. Faz 0'ın deneme betikleri (`spikes/`: GPU, mikrofon, model karşılaştırma, kısayol, yazma, pencere odağı) kullanıcının isteğiyle silindi; gerekirse git geçmişinden geri gelir: `git checkout a21d4f1 -- spikes`.
@@ -18,8 +19,9 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - `src/speak_to_print/controller.py`: durum makinesi (`State`, `Outcome`); bağımlılıkları dışarıdan alır, `tests/test_controller.py` sahte nesnelerle sınar. Yeni davranış eklerken önce buraya ve teste bak.
 - `src/speak_to_print/audio.py` (`Recorder`), `transcriber.py` (`Transcriber`, ayrı QThread), `textguard.py` (uydurma metin kalıpları), `settings.py` (QSettings), `sounds.py` (başlama/bitiş sesleri; dosyalar `/run/user/<kimlik>/speak-to-print` altında üretilir, `pw-play` ile çalınır), `history.py` (`History`: SQLite geçmişi, `~/.local/share/speak-to-print/history.db`), `config.py` (sabitler; `POPUP_TITLE`/`POPUP_SIZE` KWin kuralıyla eşleşmek zorunda).
 - `src/speak_to_print/ui/`: `listening_popup.py` (odak almayan, sabit boyutlu küçük pencere), `editor_window.py` (odak alan düzenleme penceresi; küçük pencerenin üstünde açılır), `main_window.py`, `tray.py`, `settings_dialog.py` (ayarlar; değişiklikler anında `Settings`'e yazılır).
+- `src/speak_to_print/ui/theme.py` (renkler, `ui_font`/`text_font`, ortak stil) ve `ui/widgets.py` (`Waveform`, `PrintedText`, `CropFrame`, `Switch`, `Card`, `Keycap`, `Rule`, `HistoryDelegate`). Uygulama simgesi `assets/icon.svg`; tepsi simgesi `ui/tray.py`'de aynı biçim kodla, durum rengiyle çizilir. Yazı tipleri `assets/fonts/` altında (OFL). Arayüz sınıflarının sinyal, yöntem ve bileşen adları `tests/test_app_wiring.py` ile sabitlenmiştir; tasarımı değiştirirken bu adları koru.
 - `src/speak_to_print/hotkey.py`: `PortalHotkeys` (QObject), XDG GlobalShortcuts portalını ayrı bir asyncio iş parçacığında dinler; `activated`/`deactivated`/`bound`/`failed` Qt sinyalleri verir.
-- `src/speak_to_print/desktop_entry.py`: `APP_ID` (`io.github.perxie.SpeakToPrint`) ve Kickoff kaydını yazan `install()`. Portal, kimliği bu `.desktop` dosyasının adından tanır.
+- `src/speak_to_print/desktop_entry.py`: `APP_ID` (`io.github.perxie.SpeakToPrint`) ve Kickoff kaydını yazan `install()`/`ensure()`. Portal, kimliği bu `.desktop` dosyasının adından tanır. Simge, temaya (`~/.local/share/icons/hicolor/scalable/apps/<APP_ID>.svg`) kopyalanır ve kayıtta adıyla (`Icon=<APP_ID>`) verilir: dosya yolu verilirse Kickoff'taki kısayol listesi gibi yerler simgeyi bulamıyor.
 - `src/speak_to_print/output/`: `kwin_type.type_text()` ve `clipboard_paste.ClipboardPaster` (panoyu saklar, `--sensitive` ile ayarlar, sanal klavyeden yapıştırma tuşuna basar, geri yükler). Sanal klavyeyi oluşturmak ~2 sn sürer; bir kez oluşturup yeniden kullan.
 - `src/speak_to_print/kwin_rules.py`: dinleme penceresi (odak almaz) ve düzenleme penceresi (odak alır) için KWin pencere kurallarını (her zaman üstte, konum) `~/.config/kwinrulesrc`'ye yazar/siler. Pencere, uygulama kimliği ve tam başlıkla eşleşir.
 - `src/speak_to_print/cuda_libs.py`: `preload_cuda_libraries()`, pip'ten gelen cuBLAS'ı `LD_LIBRARY_PATH` olmadan yükler. GPU'da model oluşturmadan önce çağrılmalı.
@@ -44,7 +46,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Portal kısayolu: `BindShortcuts` ilk seferde tuş atanmamış (`''`) dönebiliyor; tuş `ConfigureShortcuts` penceresinden atanıyor ve `ShortcutsChanged` ile geliyor. Ctrl+Pause seçilince KDE yalnızca "Control" kaydetti ve bozuk çalıştı (klavyede Ctrl+Pause ayrı bir "Break" tuşu); kullanıcının kısayolu Shift+Pause.
 - Wayland'de Qt'nin `WindowDoesNotAcceptFocus` ve `WA_ShowWithoutActivating` ayarları tek başına işe yaramıyor: pencere açılınca odağı alıyor. Odak almayan pencere için KWin pencere kuralı gerekiyor. Qt pencerenin ekrandaki yerini de bilmiyor (konum hep 0,0 görünür).
 - KWin 6.8, `kwinrulesrc`'de kural listesini `[General] Order=` anahtarında tutuyor (eski `count=`/`rules=` biçimini yüklerken çeviriyor); `kreadconfig6` bu dosyanın `[General]` bölümünü boş döndürüyor.
-- pip'ten gelen PySide6, KDE'nin Breeze görünümünü almıyor (görünüm `fusion`); yalnızca görsel fark.
+- Uygulama KDE temasını kullanmaz; kendi koyu temasını uygular (`theme.apply`). Yazı tipleri değişken (variable) olduğu için ağırlık `QFont.setVariableAxis("wght", …)` ile verilir; stil sayfasına `font-*` yazma, yoksa kodla atanan yazı tipini ezer.
 - Mikrofon yokken sistemin varsayılan ses kaynağı bir *monitor* olabilir; mikrofon sanılmamalı.
 - Mikrofon kayıt sırasında çıkarılınca `QAudioSource` hata bildirmiyor (ses sistemi akışı sessizce başka aygıta taşıyor); kayıp, `QMediaDevices.audioInputsChanged` ile aygıt listesinden izleniyor (`Recorder._on_inputs_changed`). `QAudioSource.stateChanged` sinyaline Python işlevi bağlama: bu PySide sürümünde `QAudio::State` çevrilemiyor ve her durum değişiminde TypeError basıyor.
 - Uygulama seslerini `QSoundEffect` ile çalma: Qt bu akışları `media.role=event` (bildirim) olarak işaretliyor ve kullanıcının KDE'sinde bildirim sesleri sessizde, hiç duyulmuyor. `sounds.py` sesleri `pw-play` ile çalar. Ses denemelerinde çıkışın monitörünü dinleyip tepe seviyesine bakma (kullanıcının o an dinlediği ses de karışır); akışın kendi özelliklerine bak: `pactl -f json list sink-inputs` (rol, sessiz, hedef).
@@ -63,11 +65,6 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Kullanıcı Java biliyor, Python ve Linux'ta yeni: Python'a özgü kavramları kısaca, Java karşılığıyla anlat.
 - sudo gerektiren bir adımdan ve proje klasörü dışına yazmadan önce kullanıcıya söyle. Proje dışına yazılan ve yeniden başlatınca silinmeyen her şeyi `docs/proje-disi-dosyalar.md`'ye ekle; kullanıcı iş bitince bunları silmek istiyor.
 - Kullanıcı GitHub'ı hiç kullanmadı: GitHub'la ilgili her adımı, hiçbir şey bilmiyormuş gibi, neyin ne olduğunu ve neden yapıldığını anlatarak açıkla. Parola ya da token isteme; giriş `gh auth login` ile kullanıcının kendi tarayıcısında yapılır.
-
-## Ajan kullanımı
-- Planlamayı ve kritik kodu kendin yap.
-- Ajanlara (Opus 5.5) sadece birbirinden bağımsız ve eksiksiz tarif edebildiğin işleri ver; tarife gerekli tüm bağlamı yaz.
-- Ajanlardan dönen her işi kabul etmeden önce gözden geçir ve test et.
 
 ## İlerleme
 - Geliştirme işine başlamadan önce `PROGRESS.md`'yi oku.
