@@ -3,9 +3,9 @@
 <!-- Bu dosya kısa kalır: "Şu an" bölümünün üstüne yazılır, biten maddeler birikince tek satırlık özete indirilir. -->
 
 ## Şu an
-- Son yapılan: Güvenlik 1. adım: pano yöntemi (`output/clipboard_paste.py`) sağlamlaştırıldı, `tests/test_clipboard_paste.py` eklendi (sahte pano ve sanal klavye). Öncesinde v1.0.0 etiketlendi. Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
-- Yarım kalan: Güvenlik düzeltmeleri. 1. adım (pano yöntemi) bitti, kullanıcı denedi ve onayladı. Sıra, ayrıntılar ve her adımın durumu git dışındaki `SECURITY_AUDIT_claude.md`'nin sonundaki "Düzeltme sırası ve durumu" bölümünde (depo herkese açık: giderilmemiş açıkları buraya ya da commit'lere yazma). Kullanıcının `mia-security-check` skill'i iyileştirildi ve kuruldu.
-- Sıradaki: Kullanıcının onayıyla 2. adım. Sonra optimizasyon. Dönülecek nokta `v1.0.0`.
+- Son yapılan: Güvenlik 1. adım (pano yöntemi, `tests/test_clipboard_paste.py`) ve 2. adım (geçmiş dosyası: `secure_delete`, bir kerelik `VACUUM`) bitti; kullanıcı ikisini de denedi. Öncesinde v1.0.0 etiketlendi. Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
+- Yarım kalan: Güvenlik düzeltmeleri. Sıra, ayrıntılar ve her adımın durumu git dışındaki `SECURITY_AUDIT_claude.md`'nin sonundaki "Düzeltme sırası ve durumu" bölümünde (depo herkese açık: giderilmemiş açıkları buraya ya da commit'lere yazma). Kullanıcının `mia-security-check` skill'i iyileştirildi ve kuruldu.
+- Sıradaki: Kullanıcının onayıyla 3. adım. Sonra optimizasyon. Dönülecek nokta `v1.0.0`.
 
 ## Yapılacaklar
 - [x] Faz 0 — Riskli parçaların denemeleri (GPU, mikrofon, model seçimi, kısayol, yazma yöntemi, odak almayan pencere).
