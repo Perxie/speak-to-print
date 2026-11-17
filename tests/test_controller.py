@@ -238,3 +238,9 @@ def test_chosen_clipboard_method_note(h):
     h.method = "pano-seçili"
     h.ready().dictate("Panoyla.")
     assert h.outcomes[-1].pasted and h.outcomes[-1].note == "Yazıldı (pano)."
+
+
+def test_paste_text_keeps_line_breaks_typed_in_the_editor(h):
+    h.ready().dictate("İlk hâli.")
+    h.controller.paste_text("Birinci satır.\nİkinci satır.")
+    assert h.written[-1] == "Birinci satır.\nİkinci satır. "

@@ -89,7 +89,9 @@ class _Worker(QObject):
                 initial_prompt=prompt or None,
             )
             # `segments` tembel bir üreteçtir; çeviri, elemanlar tüketilirken yapılır.
-            text = " ".join(segment.text.strip() for segment in segments).strip()
+            # Model çıktısı tek satır olur: satır sonu ya da başka bir denetim karakteri
+            # imlece tuş gibi gider ve terminalde satırı çalıştırabilirdi.
+            text = textguard.single_line(" ".join(segment.text for segment in segments))
             withheld = ""
             if textguard.is_invented(text) or textguard.is_prompt_echo(text, prompt):
                 text, withheld = "", text

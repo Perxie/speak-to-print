@@ -1,6 +1,6 @@
 import pytest
 
-from speak_to_print.textguard import is_invented
+from speak_to_print.textguard import is_invented, single_line
 
 
 @pytest.mark.parametrize("text", [
@@ -55,3 +55,16 @@ def test_real_sentences_are_not_echo(text):
 
 def test_no_prompt_means_no_echo():
     assert not is_prompt_echo(STYLE_PROMPT, "")
+
+
+def test_line_breaks_and_tabs_become_single_spaces():
+    assert single_line("Bir\nİki\r\n\tÜç Dört") == "Bir İki Üç Dört"
+
+
+def test_other_control_characters_are_removed():
+    assert single_line("a\x1bb\x07c\x00d\x85e") == "a b c d e"
+
+
+def test_ordinary_dictation_is_unchanged():
+    text = "Çığ düştü; İzmir'de ılık, şöyle güzel bir gün. Deploy ettik, pull request açtım."
+    assert single_line(text) == text

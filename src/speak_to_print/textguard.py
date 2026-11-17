@@ -7,6 +7,9 @@ bu yüzden bilinen kalıpların listesine bakıyoruz.
 
 Kural bilerek dar: yalnızca çıktının TAMAMI bilinen bir kalıpsa alıkonur. Bir
 cümlenin içinde geçen "teşekkür ederim" gerçek konuşma olabilir, ona dokunulmaz.
+
+`single_line` ise model çıktısını imlece yazılmadan önce tek satıra indirir:
+satır sonu, terminal odaktayken Enter gibi davranıp satırı çalıştırabilirdi.
 """
 
 from __future__ import annotations
@@ -22,6 +25,15 @@ KNOWN_PHRASES = (
     "bir sonraki videoda görüşmek üzere",
     "abone olmayı unutmayın",
 )
+
+
+# Denetim karakterleri (C0, DEL, C1) ve Unicode satır/paragraf ayırıcıları.
+_CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u2028\u2029]")
+
+
+def single_line(text: str) -> str:
+    """Satır sonu, sekme ve diğer denetim karakterlerini boşluğa çevirir; boşlukları teke indirir."""
+    return " ".join(_CONTROL.sub(" ", text).split())
 
 
 def _normalize(text: str) -> str:
