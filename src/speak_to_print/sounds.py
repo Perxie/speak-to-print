@@ -2,7 +2,10 @@
 
 Ses dosyaları uygulamayla birlikte gelmez; açılışta üretilip geçici çalışma
 klasörüne (/run/user/<kimlik>/speak-to-print) yazılır. Bu klasör bellekte
-tutulur ve oturum kapanınca kendiliğinden silinir.
+tutulur ve oturum kapanınca kendiliğinden silinir. Oturum klasörü yoksa adı
+rastgele, yalnızca bu kullanıcıya açık yeni bir geçici klasör kullanılır;
+/tmp'de sabit adlı bir klasör, başka bir hesabın önceden koyduğu bir sembolik
+bağla kullanıcının bir dosyasının üzerine yazdırılabilirdi.
 
 Sesler PipeWire'ın `pw-play` aracıyla çalınır, Qt'nin QSoundEffect'iyle değil:
 Qt bu sesleri "bildirim sesi" (media.role=event) olarak işaretliyor ve
@@ -17,6 +20,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import tempfile
 import wave
 from collections.abc import Callable
 from pathlib import Path
@@ -68,11 +72,19 @@ class Sounds(QObject):
         self._written_volume = -1
         self._player = shutil.which(PLAYER)
         runtime = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.RuntimeLocation)
-        self._folder = Path(runtime or "/tmp") / "speak-to-print"
+        if runtime:
+            self._folder = Path(runtime) / "speak-to-print"
+        else:
+            try:
+                self._folder = Path(tempfile.mkdtemp(prefix="speak-to-print-"))  # 0700, adı rastgele
+            except OSError:
+                self._folder = None  # klasör yoksa sesler kapalı; uygulama devam eder
         self._write_files(self._volume())
 
     def _write_files(self, volume: int) -> None:
         """Ses dosyalarını verilen yükseklikte (yeniden) üretir."""
+        if self._folder is None:
+            return
         try:
             self._folder.mkdir(parents=True, exist_ok=True)
             for name, frequencies in TONES.items():
