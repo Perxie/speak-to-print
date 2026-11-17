@@ -32,6 +32,9 @@ def build_prompt(use_prompt: bool, vocabulary: list[str]) -> str:
 # Kayıt
 STOP_TAIL_MS = 250  # durdurduktan sonra bu kadar daha kaydet: son hece kesilmesin
 MIN_RECORDING_SECONDS = 0.4  # bundan kısa kayıtlar çevrilmez
+# Kayıt bu süreye ulaşınca dinleme kendiliğinden bitirilir ve çevrilir: açık unutulan bir dinleme
+# odadaki konuşmaları saatlerce toplayıp sonunda o an öndeki pencereye yazmasın.
+MAX_RECORDING_SECONDS = 10 * 60
 
 # Dinleme penceresi. Başlık ve boyut, KWin pencere kuralıyla (kwin_rules.py) eşleşmek zorunda:
 # kural pencereyi başlığından tanır ve sol üst köşesini sabitler.

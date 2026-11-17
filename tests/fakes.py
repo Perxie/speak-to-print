@@ -8,6 +8,7 @@ class FakeRecorder(QObject):
     finished = Signal(object)
     failed = Signal(str)
     notice = Signal(str)
+    limit_reached = Signal()
 
     def __init__(self):
         super().__init__()

@@ -17,8 +17,10 @@ from typing import Protocol
 
 from PySide6.QtCore import QObject, Signal, SignalInstance
 
-from .config import MIN_RECORDING_SECONDS, SAMPLE_RATE
+from .config import MAX_RECORDING_SECONDS, MIN_RECORDING_SECONDS, SAMPLE_RATE
 from .output import OutputError
+
+LIMIT_NOTE = f"Kayıt {MAX_RECORDING_SECONDS // 60} dakikaya ulaştı; dinleme bitirildi."
 
 
 class State(Enum):
@@ -44,6 +46,7 @@ class RecorderLike(Protocol):
     finished: SignalInstance
     failed: SignalInstance
     level: SignalInstance
+    limit_reached: SignalInstance
 
     def start(self) -> bool: ...
     def set_paused(self, paused: bool) -> None: ...
@@ -90,9 +93,11 @@ class Controller(QObject):
         self.state = State.LOADING
         self.last_text = ""
         self.failure = ""
+        self._stopped_at_limit = False  # bu dikte süre sınırında kendiliğinden bitirildi
 
         recorder.finished.connect(self._on_recorded)
         recorder.failed.connect(self._on_recorder_failed)
+        recorder.limit_reached.connect(self._on_recording_limit)
         transcriber.ready.connect(self._on_model_ready)
         transcriber.load_failed.connect(self._on_model_failed)
         transcriber.done.connect(self._on_transcribed)
@@ -158,6 +163,7 @@ class Controller(QObject):
     # ------------------------------------------------------------ olaylar
 
     def _begin(self) -> None:
+        self._stopped_at_limit = False
         if self._recorder.start():
             self._set_state(State.LISTENING)
 
@@ -173,6 +179,14 @@ class Controller(QObject):
         if self.state in (State.LISTENING, State.PAUSED, State.TRANSCRIBING):
             self._set_state(State.IDLE)
         self.notice.emit(message)
+
+    def _on_recording_limit(self) -> None:
+        """Kayıt üst sınıra ulaştı: Bitir'e basılmış gibi bitirip çevir (kayıt atılmaz)."""
+        if self.state not in (State.LISTENING, State.PAUSED):
+            return
+        self._stopped_at_limit = True
+        self.notice.emit(LIMIT_NOTE)
+        self.finish()
 
     def _on_recorded(self, samples) -> None:
         if self.state is not State.TRANSCRIBING:
@@ -194,18 +208,25 @@ class Controller(QObject):
         self._set_state(State.IDLE)
         if not transcript.text:
             if transcript.withheld:
-                self.outcome.emit(Outcome("", False, f"Konuşma anlaşılamadı (model şunu uydurdu, yazılmadı: “{transcript.withheld}”)."))
+                self._emit_outcome(Outcome("", False, f"Konuşma anlaşılamadı (model şunu uydurdu, yazılmadı: “{transcript.withheld}”)."))
             else:
-                self.outcome.emit(Outcome("", False, "Konuşma algılanmadı; hiçbir şey yazılmadı."))
+                self._emit_outcome(Outcome("", False, "Konuşma algılanmadı; hiçbir şey yazılmadı."))
             return
         self.last_text = transcript.text
         if not self._settings.auto_paste:
-            self.outcome.emit(Outcome(transcript.text, False, "Otomatik yapıştırma kapalı; metin yazılmadı."))
+            self._emit_outcome(Outcome(transcript.text, False, "Otomatik yapıştırma kapalı; metin yazılmadı."))
             return
         pasted, note = self._paste(transcript.text)
-        self.outcome.emit(Outcome(transcript.text, pasted, note))
+        self._emit_outcome(Outcome(transcript.text, pasted, note))
 
     # ------------------------------------------------------------ yardımcılar
+
+    def _emit_outcome(self, outcome: Outcome) -> None:
+        """Diktenin sonucunu yayar; süre sınırında bitirildiyse notun başına bunu ekler."""
+        if self._stopped_at_limit:
+            self._stopped_at_limit = False
+            outcome = Outcome(outcome.text, outcome.pasted, f"{LIMIT_NOTE} {outcome.note}")
+        self.outcome.emit(outcome)
 
     def _paste(self, text: str) -> tuple[bool, str]:
         # Kendi penceremiz öndeyse yazmayız: metin başka uygulamaya gitmez, kaybolurdu.

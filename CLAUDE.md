@@ -36,6 +36,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Uygulama servis değildir: otomatik başlama yok, pencere kapanınca tamamen kapanır.
 - Küçük (dinleme) penceresi odak almadığı için içine klavyeyle yazılamaz: metin orada yalnızca gösterilir. Metne ya da Düzenle'ye tıklanınca odak alan düzenleme penceresi açılır; oradaki Yapıştır pencereyi kapatır ve odak önceki uygulamaya dönünce yazar (`Application._paste_from_editor`).
 - Sözlük, ipucu metninin başına "Terimler: a, b, c." satırı olarak verilir (`config.build_prompt`); `hotwords` parametresi kullanılmaz (ölçümde işe yaramadı). Kısa listede etkili, uzun listede etkisiz.
+- Kayıt `config.MAX_RECORDING_SECONDS` (10 dk, kullanıcı seçti) süresine ulaşınca dinleme Bitir'e basılmış gibi bitirilir ve çevrilir; kayıt atılmaz, sonuç notunun başında neden bittiği yazar. Amaç gizlilik (açık unutulan dinleme); ekran kartı belleği kayıt uzunluğuyla büyümez (faster-whisper sesi 30 sn'lik parçalarla sırayla işler).
 - Otomatik yapıştırma kullanıcı ayarıdır (varsayılan açık). Kapalıyken metin yalnızca gösterilir; küçük pencere metin alınana kadar kendiliğinden kapanmaz.
 
 ## Dikkat

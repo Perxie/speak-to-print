@@ -11,7 +11,7 @@ import numpy as np
 from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtMultimedia import QAudioDevice, QAudioFormat, QAudioSource, QMediaDevices
 
-from .config import SAMPLE_RATE, STOP_TAIL_MS
+from .config import MAX_RECORDING_SECONDS, SAMPLE_RATE, STOP_TAIL_MS
 
 
 def is_monitor(device: QAudioDevice) -> bool:
@@ -52,12 +52,14 @@ class Recorder(QObject):
     notice = Signal(str)  # kullanıcıya gösterilecek kısa bilgi
     finished = Signal(object)  # kayıt bitti: float32 numpy dizisi (-1..1)
     failed = Signal(str)
+    limit_reached = Signal()  # kayıt MAX_RECORDING_SECONDS'a ulaştı (bir kez); bitirmek denetleyicinin işi
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._source: QAudioSource | None = None
         self._io = None
         self._chunks: list[bytes] = []
+        self._bytes = 0  # kaydedilen sesin toplam boyu; süre göstergesi her seferinde toplamasın
         self._paused = False
         self._stopping = False
         self.device_name = ""
@@ -75,7 +77,7 @@ class Recorder(QObject):
     @property
     def seconds(self) -> float:
         """Şimdiye kadar kaydedilen (bekletilmemiş) sesin süresi."""
-        return sum(len(chunk) for chunk in self._chunks) / 2 / SAMPLE_RATE
+        return self._bytes / 2 / SAMPLE_RATE  # 16 bit = 2 bayt/örnek
 
     def start(self) -> bool:
         if self._source is not None:
@@ -97,6 +99,7 @@ class Recorder(QObject):
         self.device_name = device.description()
         self._device_id = device_id(device)
         self._chunks = []
+        self._bytes = 0
         self._paused = False
         self._stopping = False
         self._source = QAudioSource(device, fmt, self)
@@ -141,6 +144,10 @@ class Recorder(QObject):
         if not data or self._paused:
             return
         self._chunks.append(bytes(data))
+        reached_before = self.seconds >= MAX_RECORDING_SECONDS
+        self._bytes += len(data)
+        if not reached_before and self.seconds >= MAX_RECORDING_SECONDS:
+            self.limit_reached.emit()
         samples = np.frombuffer(data, dtype=np.int16)
         if samples.size:
             self.level.emit(float(np.max(np.abs(samples.astype(np.int32)))) / 32768.0)
@@ -160,6 +167,7 @@ class Recorder(QObject):
         self._source = None
         self._io = None
         self._chunks = []
+        self._bytes = 0
         self._paused = False
         self._stopping = False
         self.level.emit(0.0)

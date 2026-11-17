@@ -244,3 +244,34 @@ def test_paste_text_keeps_line_breaks_typed_in_the_editor(h):
     h.ready().dictate("İlk hâli.")
     h.controller.paste_text("Birinci satır.\nİkinci satır.")
     assert h.written[-1] == "Birinci satır.\nİkinci satır. "
+
+
+def test_recording_limit_finishes_listening_and_transcribes(h):
+    h.ready().controller.toggle()
+    h.recorder.limit_reached.emit()
+    assert h.controller.state is State.TRANSCRIBING and h.recorder.calls[-1] == "stop"
+    assert "Kayıt 10 dakikaya ulaştı; dinleme bitirildi." in h.notices
+
+
+def test_outcome_after_the_limit_says_why_listening_stopped(h):
+    h.ready().controller.toggle()
+    h.recorder.limit_reached.emit()
+    h.recorder.finished.emit(ONE_SECOND)
+    h.transcriber.done.emit(Transcript("Uzun bir konuşma.", "", 12.0, 600.0))
+    assert h.written == ["Uzun bir konuşma. "]
+    assert "10 dakikaya ulaştı" in h.outcomes[-1].note
+
+
+def test_note_about_the_limit_does_not_carry_over_to_the_next_dictation(h):
+    h.ready().controller.toggle()
+    h.recorder.limit_reached.emit()
+    h.recorder.finished.emit(ONE_SECOND)
+    h.transcriber.done.emit(Transcript("Uzun bir konuşma.", "", 12.0, 600.0))
+    h.dictate("İkinci.")
+    assert "10 dakika" not in h.outcomes[-1].note
+
+
+def test_limit_signal_while_not_listening_is_ignored(h):
+    h.ready()
+    h.recorder.limit_reached.emit()
+    assert h.controller.state is State.IDLE and h.recorder.calls == []
