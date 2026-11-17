@@ -3,9 +3,9 @@
 <!-- Bu dosya kısa kalır: "Şu an" bölümünün üstüne yazılır, biten maddeler birikince tek satırlık özete indirilir. -->
 
 ## Şu an
-- Son yapılan: Faz 5 (yeniden tasarım) tamamlandı, kullanıcı gerçek ekranda denedi ve onayladı; commit edilip GitHub'a gönderildi. Bütün pencereler `docs/tasarim.md`'deki dille yeniden çizildi; uygulama simgesi temaya kopyalanıyor (Kickoff'taki kısayol satırı oturum yeniden açılınca yenilendi). `CLAUDE.md`'deki "Ajan kullanımı" bölümü kullanıcının isteğiyle kaldırıldı.
+- Son yapılan: Bu hâl **v1.0.0** olarak etiketlendi ve GitHub'a gönderildi (git etiketi + GitHub sürümü). Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
 - Yarım kalan: Yok.
-- Sıradaki: Planlı iş yok. Kullanıcı isterse "Fikirler" bölümünden biri ya da günlük kullanımda çıkan sorunlar.
+- Sıradaki: Güvenlik açığı taraması ve performans iyileştirmesi (kullanıcı sıradaki iş olarak söyledi). Bir şey bozulursa dönülecek nokta: `v1.0.0` (bkz. CLAUDE.md, "Sürümler").
 
 ## Yapılacaklar
 - [x] Faz 0 — Riskli parçaların denemeleri (GPU, mikrofon, model seçimi, kısayol, yazma yöntemi, odak almayan pencere).

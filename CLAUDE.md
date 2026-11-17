@@ -60,6 +60,11 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Ekran kartı kullanılamazsa model işlemciye (`int8`) yüklenir: 8 sn ses yaklaşık 4 sn'de çevrilir. Model önbellekte yoksa bir kez indirilir; `download_model(local_files_only=True)` ağa çıkmaz, bu yüzden `HF_HUB_OFFLINE` kullanılmıyor.
 - Kullanıcının kabuğu fish: ortamı elle etkinleştirmek için `source .venv/bin/activate.fish`.
 
+## Sürümler
+- `v1.0.0` (17 Kasım 2026): bütün fazları (0–5) tamamlanmış, kullanıcının onayladığı kararlı sürüm. Bir şey bozulursa dönülecek nokta bu etiket.
+- Bir dosyayı bu sürümdeki hâline döndürmek: `git checkout v1.0.0 -- <dosya>`. Bu sürümden sonraki bütün değişiklikleri görmek: `git diff v1.0.0`.
+- Projenin tamamını bu sürüme döndürmek (`git reset --hard v1.0.0`) sonraki commit'leri siler; yalnızca kullanıcı açıkça isterse yap. Geri dönüşte `uv sync` çalıştır.
+
 ## Çalışma kuralları
 - Her aşamanın sonunda kullanıcıya test tarifi ver. Kullanıcı deneyip onaylayınca commit et, `git push` ile GitHub'a gönder (herkese açık repo `Perxie/speak-to-print`, remote `origin`; kullanıcı bilerek açtı) ve bir sonraki aşamaya geçmeden onay bekle.
 - Kullanıcı Java biliyor, Python ve Linux'ta yeni: Python'a özgü kavramları kısaca, Java karşılığıyla anlat.
