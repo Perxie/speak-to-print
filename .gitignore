@@ -25,3 +25,5 @@ dist/
 # Proje köküne bırakılan ekran görüntüleri (kişisel, git'e girmez)
 /*.png
 /*.jpg
+SECURITY_AUDIT.md
+SECURITY_AUDIT_claude.md

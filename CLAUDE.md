@@ -32,6 +32,7 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Arayüz ve mikrofon: PySide6 (Qt 6, QtMultimedia). Bağımlılık `pyside6-addons`; `pyside6` üst paketi gereksiz WebEngine'i de indiriyor. D-Bus: dbus-fast.
 - Global kısayol: XDG GlobalShortcuts portalı (kullanıcının tuşu Shift+Pause).
 - Metni yazma: varsayılan `kwin-type` (1–2 ms, panoya dokunmaz, izin penceresi yok). Hata verirse otomatik yedek pano + Shift+Insert (~0,5 sn). İkisi de Türkçe Q, Türkçe F ve İngilizce (US) düzenlerinde denendi ve doğru çalıştı; pano + Ctrl+V ise Türkçe F'de çalışmıyor.
+- Pano yönteminde eski pano yapıştırmadan 0,4 sn sonra geri konur; parola yöneticisinin işaretlediği (`x-kde-passwordManagerHint`) içerik ise hiç geri konmaz, pano boşaltılır. Geri konsa, panoyu geç okuyan yavaş bir uygulama dikte yerine parolayı yapıştırır ve parola işaretsiz kalıp Klipper geçmişine düşerdi. Geri yükleme hata yolunda da (`finally`) yapılır.
 - Uygulama servis değildir: otomatik başlama yok, pencere kapanınca tamamen kapanır.
 - Küçük (dinleme) penceresi odak almadığı için içine klavyeyle yazılamaz: metin orada yalnızca gösterilir. Metne ya da Düzenle'ye tıklanınca odak alan düzenleme penceresi açılır; oradaki Yapıştır pencereyi kapatır ve odak önceki uygulamaya dönünce yazar (`Application._paste_from_editor`).
 - Sözlük, ipucu metninin başına "Terimler: a, b, c." satırı olarak verilir (`config.build_prompt`); `hotwords` parametresi kullanılmaz (ölçümde işe yaramadı). Kısa listede etkili, uzun listede etkisiz.
