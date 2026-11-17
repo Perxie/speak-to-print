@@ -11,7 +11,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from PySide6.QtCore import QObject, Qt, QTimer
+from PySide6.QtCore import QObject, QStandardPaths, Qt, QTimer
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import QApplication
@@ -60,10 +60,36 @@ def _setup_logging() -> None:
     logging.getLogger("faster_whisper").setLevel(logging.WARNING)  # kütüphanenin ayrıntı satırları günlüğü doldurmasın
 
 
-def _already_running() -> bool:
+def _instance_socket_path() -> str | None:
+    """Tek kopya soketinin tam yolu: /run/user/<kimlik>/<APP_ID>.
+
+    Oturum klasörüne (XDG_RUNTIME_DIR) yalnızca bu kullanıcı girebilir. Soket,
+    herkesin yazabildiği /tmp'de olsaydı başka bir hesap aynı adla önceden bir
+    soket açıp uygulamanın açılmasını engelleyebilirdi. Klasör bulunamazsa None.
+    """
+    runtime = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.RuntimeLocation)
+    return str(Path(runtime) / desktop_entry.APP_ID) if runtime else None
+
+
+def _listen_for_instances(server: QLocalServer, path: str | None) -> bool:
+    """Sonradan açılan kopyaların bağlanacağı soketi açar; açılamazsa günlüğe yazar."""
+    if path is None:
+        log.warning("Oturum klasörü bulunamadı; tek kopya denetimi kapalı.")
+        return False
+    QLocalServer.removeServer(path)  # çökmeden kalan eski soket dosyası
+    server.setSocketOptions(QLocalServer.SocketOption.UserAccessOption)  # yalnızca bu hesap bağlanabilir
+    if not server.listen(path):
+        log.warning("Tek kopya soketi açılamadı: %s", server.errorString())
+        return False
+    return True
+
+
+def _already_running(path: str | None) -> bool:
     """Başka bir kopya açıksa ona "pencereni göster" der ve True döner."""
+    if path is None:
+        return False
     socket = QLocalSocket()
-    socket.connectToServer(desktop_entry.APP_ID)
+    socket.connectToServer(path)
     if not socket.waitForConnected(300):
         return False
     socket.write(b"show")
@@ -218,8 +244,7 @@ class Application(QObject):
 
     def start(self, listen_for_instances: bool = True, use_hotkeys: bool = True) -> None:
         if listen_for_instances:
-            QLocalServer.removeServer(desktop_entry.APP_ID)
-            self.server.listen(desktop_entry.APP_ID)
+            _listen_for_instances(self.server, _instance_socket_path())
         self.window.show()
         if use_hotkeys:
             self.hotkeys.start()
@@ -446,7 +471,7 @@ def main() -> int:
     theme.apply(app)
     app.setWindowIcon(QIcon(str(desktop_entry.ICON_PATH)))
 
-    if _already_running():
+    if _already_running(_instance_socket_path()):
         log.info("Uygulama zaten açık; açık olan pencere gösterildi.")
         return 0
 
