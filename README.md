@@ -21,17 +21,19 @@ Bu depoda yalnızca kod ve belgeler var. Model, Python ortamı, ayarlarınız ve
    sudo pacman -S git github-cli uv wl-clipboard base-devel libei
    ```
 
-2. GitHub'a giriş yapın (depo gizli olduğu için gerekli; tarayıcıda onaylarsınız):
+2. Depoyu indirin ("clone": deponun bütün geçmişiyle birlikte bir kopyasını alır). Depo herkese
+   açık olduğu için indirmek için GitHub'a giriş gerekmez:
+
+   ```
+   git clone https://github.com/Perxie/speak-to-print.git ~/myProjects/speak-to-print
+   cd ~/myProjects/speak-to-print
+   ```
+
+3. Değişiklikleri GitHub'a göndermeyi düşünüyorsanız giriş yapın (yalnızca deponun sahibi için;
+   tarayıcıda onaylarsınız):
 
    ```
    gh auth login --hostname github.com --git-protocol https --web
-   ```
-
-3. Depoyu indirin ("clone": deponun bütün geçmişiyle birlikte bir kopyasını alır):
-
-   ```
-   gh repo clone Perxie/speak-to-print ~/myProjects/speak-to-print
-   cd ~/myProjects/speak-to-print
    ```
 
 4. Python ortamını kurun (uv, gereken Python sürümünü ve paketleri indirir; yaklaşık 2 GB):

@@ -61,8 +61,9 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 - Kullanıcının kabuğu fish: ortamı elle etkinleştirmek için `source .venv/bin/activate.fish`.
 
 ## Çalışma kuralları
-- Her aşamanın sonunda kullanıcıya test tarifi ver. Kullanıcı deneyip onaylayınca commit et, `git push` ile GitHub'a gönder (gizli repo `Perxie/speak-to-print`, remote `origin`) ve bir sonraki aşamaya geçmeden onay bekle.
+- Her aşamanın sonunda kullanıcıya test tarifi ver. Kullanıcı deneyip onaylayınca commit et, `git push` ile GitHub'a gönder (herkese açık repo `Perxie/speak-to-print`, remote `origin`; kullanıcı bilerek açtı) ve bir sonraki aşamaya geçmeden onay bekle.
 - Kullanıcı Java biliyor, Python ve Linux'ta yeni: Python'a özgü kavramları kısaca, Java karşılığıyla anlat.
+- Depo herkese açık: kişisel veriyi (ses kayıtları, dikte geçmişi, ekran görüntüleri, gerçek e-posta, ad) commit etme. Commit kimliği GitHub'ın gizli adresi (`…@users.noreply.github.com`).
 - sudo gerektiren bir adımdan ve proje klasörü dışına yazmadan önce kullanıcıya söyle. Proje dışına yazılan ve yeniden başlatınca silinmeyen her şeyi `docs/proje-disi-dosyalar.md`'ye ekle; kullanıcı iş bitince bunları silmek istiyor.
 - Kullanıcı GitHub'ı hiç kullanmadı: GitHub'la ilgili her adımı, hiçbir şey bilmiyormuş gibi, neyin ne olduğunu ve neden yapıldığını anlatarak açıkla. Parola ya da token isteme; giriş `gh auth login` ile kullanıcının kendi tarayıcısında yapılır.
 
