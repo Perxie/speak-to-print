@@ -22,6 +22,17 @@ from pathlib import Path
 RULE_ID = "speak-to-print-dinleme"  # kuralın ayar dosyasındaki bölüm adı
 EDITOR_RULE_ID = "speak-to-print-duzenleme"
 FORCE = "2"  # KWin'de "Zorla": uygulama ne isterse istesin bu değer geçerli
+TOOL_TIMEOUT = 10  # sn; KWin ya da KDE aracı yanıt vermezse uygulama açılışta takılı kalmasın
+
+
+def _run(command: list[str], check: bool) -> None:
+    """KDE aracını çalıştırır. Yanıt vermezse ya da hata verirse RuntimeError (açılış bunu günlüğe yazar)."""
+    try:
+        subprocess.run(command, capture_output=True, check=check, timeout=TOOL_TIMEOUT)
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError(f"{command[0]} {TOOL_TIMEOUT} sn içinde yanıt vermedi.") from error
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(f"{command[0]} hata verdi (çıkış kodu {error.returncode}).") from error
 
 
 def _config_path() -> Path:
@@ -50,7 +61,7 @@ def _read(group: str, key: str) -> str:
 
 
 def _write(group: str, key: str, value: str) -> None:
-    subprocess.run(["kwriteconfig6", "--file", "kwinrulesrc", "--group", group, "--key", key, value], check=True)
+    _run(["kwriteconfig6", "--file", "kwinrulesrc", "--group", group, "--key", key, value], check=True)
 
 
 def _rule_ids() -> list[str]:
@@ -71,8 +82,7 @@ def _set_rule_ids(rules: list[str]) -> None:
 
 
 def _reload_kwin() -> None:
-    subprocess.run(["qdbus6", "org.kde.KWin", "/KWin", "org.kde.KWin.reconfigure"],
-                   capture_output=True, check=False)
+    _run(["qdbus6", "org.kde.KWin", "/KWin", "org.kde.KWin.reconfigure"], check=False)
 
 
 def _backup_once() -> Path | None:
