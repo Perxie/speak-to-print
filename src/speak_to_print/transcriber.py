@@ -16,7 +16,7 @@ import numpy as np
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 
 from . import textguard
-from .config import COMPUTE_TYPE, LANGUAGE, MODEL_NAME, SAMPLE_RATE, build_prompt
+from .config import COMPUTE_TYPE, LANGUAGE, MODEL_NAME, MODEL_REVISION, SAMPLE_RATE, build_prompt
 from .cuda_libs import preload_cuda_libraries
 
 
@@ -46,11 +46,11 @@ class _Worker(QObject):
 
         try:
             # local_files_only: ağa hiç çıkmadan yalnızca önbelleğe bakar.
-            return download_model(MODEL_NAME, local_files_only=True)
+            return download_model(MODEL_NAME, local_files_only=True, revision=MODEL_REVISION)
         except Exception:  # noqa: BLE001 — model önbellekte yok
             self.status.emit("Model ilk kez indiriliyor (yaklaşık 3 GB); bu birkaç dakika sürebilir…")
             try:
-                return download_model(MODEL_NAME)
+                return download_model(MODEL_NAME, revision=MODEL_REVISION)
             except Exception as error:  # noqa: BLE001
                 raise RuntimeError("Konuşma tanıma modeli bu bilgisayarda yok ve indirilemedi. İnternet "
                                    "bağlantınızı kontrol edip uygulamayı yeniden açın.") from error

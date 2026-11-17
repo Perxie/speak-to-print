@@ -65,6 +65,10 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 ## Sürümler
 - `v1.0.0` (17 Kasım 2026): bütün fazları (0–5) tamamlanmış, kullanıcının onayladığı kararlı sürüm. Bir şey bozulursa dönülecek nokta bu etiket.
 - Bir dosyayı bu sürümdeki hâline döndürmek: `git checkout v1.0.0 -- <dosya>`. Bu sürümden sonraki bütün değişiklikleri görmek: `git diff v1.0.0`.
+- Kurulumda inen üç şey denenmiş sürüme sabit; kendiliğinden güncellenmez, bilerek değiştirilir:
+  - Model: `config.MODEL_REVISION` (Hugging Face `Systran/faster-whisper-large-v3` commit'i). Yenisine geçmek için modeli o commit'le indirip dene, sonra kimliği değiştir.
+  - kwin-type: README'deki `git checkout <commit>` satırı (şu an v0.2, `0bc344b`). Yenisi için `git -C ~/.local/src/kwin-type fetch`, değişikliklere bak, derleyip dene, sonra README'yi güncelle.
+  - Python paketleri: `uv.lock`. README'de `uv sync --locked` (kilit `pyproject.toml` ile uyuşmazsa hata verir). Geliştirirken `uv add`/`uv lock` kilidi günceller.
 - Projenin tamamını bu sürüme döndürmek (`git reset --hard v1.0.0`) sonraki commit'leri siler; yalnızca kullanıcı açıkça isterse yap. Geri dönüşte `uv sync` çalıştır.
 
 ## Çalışma kuralları

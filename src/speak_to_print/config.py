@@ -6,6 +6,10 @@ SAMPLE_RATE = 16_000  # Whisper 16 kHz mono ses bekler
 
 # Konuşma tanıma (gerekçe: docs/model-karsilastirma.md)
 MODEL_NAME = "large-v3"
+# Hugging Face'teki Systran/faster-whisper-large-v3 deposunun denenmiş commit'i. Yeni
+# kurulumda bu sürüm iner; depo sonradan değişse ya da ele geçirilse de aynı model
+# gelir. Güncellemek için: yeni commit'i denedikten sonra bu kimliği değiştir.
+MODEL_REVISION = "edaa852ec7e145841d8ffdb056a99866b5f0a478"
 COMPUTE_TYPE = "float16"
 LANGUAGE = "tr"
 # Modele verilen örnek metin: noktalama ve büyük harf kullanımını sabitlemeye yardım eder.

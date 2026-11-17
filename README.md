@@ -36,17 +36,22 @@ Bu depoda yalnızca kod ve belgeler var. Model, Python ortamı, ayarlarınız ve
    gh auth login --hostname github.com --git-protocol https --web
    ```
 
-4. Python ortamını kurun (uv, gereken Python sürümünü ve paketleri indirir; yaklaşık 2 GB):
+4. Python ortamını kurun (uv, gereken Python sürümünü ve paketleri indirir; yaklaşık 2 GB).
+   `--locked`, paketleri `uv.lock`'ta yazan sürümlerle kurar; dosyalar uyuşmazsa sessizce
+   başka sürüm seçmek yerine hata verir:
 
    ```
-   uv sync
+   uv sync --locked
    ```
 
 5. `kwin-type` aracını derleyin. Uygulama metni bununla yazar; yoksa kendiliğinden panoyla
-   yapıştırma yöntemine geçer (çalışır ama yarım saniye daha yavaştır):
+   yapıştırma yöntemine geçer (çalışır ama yarım saniye daha yavaştır). İkinci satır, denenmiş
+   sürüme (v0.2) geçer: dikte edilen her metin bu programdan geçtiği için deponun o günkü son
+   hâli değil, bilinen bir sürüm derlenir:
 
    ```
    git clone https://git.zx2c4.com/kwin-type ~/.local/src/kwin-type
+   git -C ~/.local/src/kwin-type checkout 0bc344b0d4a490d91d3a7e5e0cbe6481a4e88ab4
    make -C ~/.local/src/kwin-type
    install -Dm755 ~/.local/src/kwin-type/kwin-type ~/.local/bin/kwin-type
    ```
@@ -77,7 +82,7 @@ Başka bir bilgisayarda yapılan değişiklikleri almak için:
 ```
 cd ~/myProjects/speak-to-print
 git pull
-uv sync
+uv sync --locked
 ```
 
 ## Kaldırma
