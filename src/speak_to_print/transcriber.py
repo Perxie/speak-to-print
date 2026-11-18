@@ -155,6 +155,10 @@ class Transcriber(QObject):
         self._worker.done.connect(self.done)
         self._worker.failed.connect(self.failed)
         self._worker.status.connect(self.status)
+        self._load_started = False
+        self._load_result: tuple[str, tuple] | None = None  # ("ready", (sn, aygıt)) ya da ("load_failed", (ileti,))
+        self.ready.connect(lambda seconds, device: self._remember("ready", seconds, device))
+        self.load_failed.connect(lambda message: self._remember("load_failed", message))
         self._thread.start()
 
     @property
@@ -162,7 +166,21 @@ class Transcriber(QObject):
         return self._worker.gpu_error
 
     def load(self) -> None:
-        self._load_requested.emit()
+        """Modeli yükler. Kaç kez çağrılırsa çağrılsın model bir kez yüklenir.
+
+        Açılış yüklemeyi erken başlatır, `Controller.start()` da ister; ikinci istek yeni bir
+        yükleme başlatmaz. Yükleme bitmişse sonuç (`ready` ya da `load_failed`) yeniden
+        bildirilir: haber dinleyiciler bağlanmadan teslim edilmiş olsa bile isteyen onu alır.
+        """
+        if self._load_result is not None:
+            name, args = self._load_result
+            getattr(self, name).emit(*args)
+        elif not self._load_started:
+            self._load_started = True
+            self._load_requested.emit()
+
+    def _remember(self, name: str, *args) -> None:
+        self._load_result = (name, args)
 
     def transcribe(self, samples: np.ndarray, use_prompt: bool, vocabulary: list[str] | None = None) -> None:
         self._transcribe_requested.emit(samples, use_prompt, list(vocabulary or []))

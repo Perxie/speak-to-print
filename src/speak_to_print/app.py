@@ -37,6 +37,7 @@ from .ui.settings_dialog import SettingsDialog
 from .ui.tray import Tray
 
 log = logging.getLogger("speak_to_print")
+_IMPORTED_AT = time.monotonic()
 
 
 def log_file_path() -> Path:
@@ -59,6 +60,19 @@ def _setup_logging() -> None:
         handler.setFormatter(formatter)
     logging.basicConfig(level=logging.INFO, handlers=handlers)
     logging.getLogger("faster_whisper").setLevel(logging.WARNING)  # kütüphanenin ayrıntı satırları günlüğü doldurmasın
+
+
+def _seconds_since_process_start() -> float:
+    """Sürecin başlamasından (Kickoff'ta tıklanmasından) bu yana geçen süre, ~10 ms çözünürlükle.
+
+    Linux'un /proc kaydından okunur: Python'un açılışı ve içe aktarmalar da dahil.
+    """
+    try:
+        with open("/proc/self/stat", encoding="ascii") as stat, open("/proc/uptime", encoding="ascii") as uptime:
+            start_ticks = int(stat.read().rsplit(")", 1)[1].split()[19])  # 22. alan: başlangıç (saat tıkı)
+            return float(uptime.read().split()[0]) - start_ticks / os.sysconf("SC_CLK_TCK")
+    except (OSError, ValueError, IndexError):
+        return time.monotonic() - _IMPORTED_AT
 
 
 def _private_dir(path: Path) -> Path:
@@ -409,7 +423,7 @@ class Application(QObject):
         self.window.show_loading_status(text)
 
     def _on_model_ready(self, seconds: float, device: str) -> None:
-        log.info("Model yüklendi: %.1f sn (%s)", seconds, device)
+        log.info("Model yüklendi: %.1f sn (%s); açılıştan beri %.2f sn", seconds, device, _seconds_since_process_start())
         if device != "cuda":
             log.warning("Ekran kartı kullanılamadı, işlemciye geçildi: %s", self.transcriber.gpu_error)
         self.window.set_model_info(seconds, device)
@@ -502,8 +516,13 @@ def main() -> int:
         return 0
 
     log.info("Başlıyor (Qt platformu: %s).", QGuiApplication.platformName())
+    # Model, kendi iş parçacığında, pencereler ve ses altyapısı (QMediaDevices, ~0,4 sn) kurulurken
+    # yüklenmeye başlasın. Tek kopya denetiminden sonra: ikinci kopya modeli boşuna yüklemesin.
+    # Controller.start() yüklemeyi yeniden ister; Transcriber.load() modeli yine bir kez yükler.
+    transcriber = Transcriber()
+    transcriber.load()
     _prepare_system_integration()
-    application = Application(on_quit=app.quit)
+    application = Application(on_quit=app.quit, transcriber=transcriber)
     application.start()
     if args.quit_after:
         QTimer.singleShot(int(args.quit_after * 1000), application.window.close)

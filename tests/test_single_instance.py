@@ -85,3 +85,9 @@ def test_without_a_runtime_dir_the_check_is_skipped_and_logged(monkeypatch, serv
     assert not app_module._already_running(path)
     assert not app_module._listen_for_instances(server, path)
     assert "tek kopya denetimi kapalı" in caplog.text
+
+
+def test_time_since_the_process_started_is_measured():
+    # "Model yüklendi" satırı açılıştan beri geçen süreyi de yazar (Kickoff'tan tıklamadan "hazır"a).
+    seconds = app_module._seconds_since_process_start()
+    assert 0 < seconds < 3600

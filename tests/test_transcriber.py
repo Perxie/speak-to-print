@@ -1,10 +1,13 @@
 """Model çıktısının işlenmesi: gerçek model yerine sabit metin döndüren sahte bir model kullanılır."""
 
 import sys
+import time
 import types
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
+from PySide6.QtCore import QCoreApplication
 
 from speak_to_print.config import MODEL_REVISION, SAMPLE_RATE
 from speak_to_print import transcriber as transcriber_module
@@ -135,3 +138,60 @@ def test_failed_warm_up_leaves_the_model_usable(monkeypatch):
     assert ("hazır", "cuda") in world.events
     assert not [e for e in world.events if e[0] == "yükleme hatası"]
     assert world.worker._model is not None
+
+
+def wait_until(condition, seconds=3.0):
+    """Arka plan iş parçacığından gelen kuyruklu sinyaller teslim edilsin diye olay döngüsünü döndürür."""
+    deadline = time.monotonic() + seconds
+    while not condition() and time.monotonic() < deadline:
+        QCoreApplication.processEvents()
+        time.sleep(0.005)
+    return condition()
+
+
+@pytest.fixture
+def facade(monkeypatch):
+    """Gerçek Transcriber ve iş parçacığı; yalnızca model yüklemesi sahte (anında biter, kaç kez çağrıldığını sayar)."""
+    state = SimpleNamespace(loads=0, fail=False, ready=[], failed=[])
+
+    def fake_load(self):
+        state.loads += 1
+        if state.fail:
+            self.load_failed.emit("Model yüklenemedi.")
+        else:
+            self.ready.emit(0.1, "cuda")
+
+    monkeypatch.setattr(transcriber_module._Worker, "load", fake_load)
+    t = transcriber_module.Transcriber()
+    t.ready.connect(lambda seconds, device: state.ready.append(device))
+    t.load_failed.connect(state.failed.append)
+    state.t = t
+    yield state
+    t.shutdown()
+
+
+def test_model_is_loaded_once_even_if_loading_is_requested_twice(facade):
+    # Açılışta yükleme erken başlatılıyor; Controller.start() da yüklemeyi istiyor. Model iki kez yüklenmemeli.
+    facade.t.load()
+    facade.t.load()
+    assert wait_until(lambda: facade.ready)
+    wait_until(lambda: False, seconds=0.1)
+    assert facade.loads == 1
+
+
+def test_asking_to_load_after_the_model_is_ready_reports_ready_again(facade):
+    # "Hazır" haberi dinleyiciler bağlanmadan teslim edilmiş olsa bile, yüklemeyi isteyen haberi alır.
+    facade.t.load()
+    assert wait_until(lambda: facade.ready)
+    facade.t.load()
+    assert wait_until(lambda: len(facade.ready) == 2)
+    assert facade.loads == 1
+
+
+def test_asking_to_load_after_a_failed_load_reports_the_failure_again(facade):
+    facade.fail = True
+    facade.t.load()
+    assert wait_until(lambda: facade.failed)
+    facade.t.load()
+    assert wait_until(lambda: len(facade.failed) == 2)
+    assert facade.loads == 1
