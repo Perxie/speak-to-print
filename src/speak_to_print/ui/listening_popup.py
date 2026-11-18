@@ -200,7 +200,7 @@ class ListeningPopup(Card):
         self.waveform.push(level)
 
     def show_outcome(self, outcome: Outcome) -> None:
-        self.note.setText(outcome.note)
+        self.note.setText(outcome.shown_note)
         self._show_buttons(listening=False)
         self.edit_button.setEnabled(bool(outcome.text))
         self.copy_button.setEnabled(bool(outcome.text))
@@ -221,7 +221,7 @@ class ListeningPopup(Card):
             theme.set_kind(self.paste_button, "" if outcome.pasted else "primary")
             theme.set_kind(self.listen_button, "primary" if outcome.pasted else "")
         else:
-            self._show_message("Metin yok", theme.LEAD, outcome.note)
+            self._show_message("Metin yok", theme.LEAD, outcome.shown_note)
         self.show()
         # Metin yazıldıysa pencere kendiliğinden kapanır. Yazılmadıysa metnin tek durduğu
         # yer burasıdır; kullanıcı Kapat'a basana kadar açık kalır.

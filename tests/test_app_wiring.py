@@ -276,3 +276,12 @@ def test_history_list_never_shows_more_than_the_database_keeps(env, monkeypatch)
     window = env.app.window
     shown = [window.history.item(row).data(Qt.ItemDataRole.UserRole).text for row in range(window.history.count())]
     assert shown == [entry.text for entry in env.app.history.recent()] == ["Dikte 4.", "Dikte 3.", "Dikte 2."]
+
+
+def test_invented_text_is_shown_but_never_written_to_the_log(env, caplog):
+    caplog.set_level("INFO", logger="speak_to_print")
+    env.press()
+    env.press()
+    env.result("", withheld='Uydurma 4711 "düz tırnaklı"')
+    assert "Uydurma 4711" in env.app.popup._message.text() and "Uydurma 4711" in env.app.window.detail.text()
+    assert "Uydurma 4711" not in caplog.text and "Sonuç:" in caplog.text

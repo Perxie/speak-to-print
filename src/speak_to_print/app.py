@@ -433,7 +433,8 @@ class Application(QObject):
                  transcript.seconds, len(transcript.text), " (uydurma metin alıkondu)" if transcript.withheld else "")
 
     def _on_outcome(self, outcome: Outcome) -> None:
-        log.info("Sonuç: %s — %s", "yazıldı" if outcome.pasted else "yazılmadı", outcome.note.split("“")[0])
+        # Yalnızca not: uydurulan metin (outcome.withheld) günlüğe yazılmaz.
+        log.info("Sonuç: %s — %s", "yazıldı" if outcome.pasted else "yazılmadı", outcome.note)
         self.popup.show_outcome(outcome)
         self.window.show_outcome(outcome)
         self._remember(outcome.text)

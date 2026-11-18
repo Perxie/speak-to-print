@@ -149,7 +149,23 @@ def test_empty_transcript_types_nothing(h):
 
 def test_invented_text_is_withheld_but_shown(h):
     h.ready().dictate("", withheld="Altyazı M.K.")
-    assert h.written == [] and "Altyazı M.K." in h.outcomes[-1].note
+    outcome = h.outcomes[-1]
+    assert h.written == [] and outcome.withheld == "Altyazı M.K." and "Altyazı M.K." in outcome.shown_note
+
+
+def test_invented_text_is_kept_out_of_the_note_that_goes_to_the_log(h):
+    # Not günlüğe yazılır; uydurulan metin (gerçek konuşmanın yanlış duyulmuş hâli olabilir) ayrı alanda durur.
+    h.ready().dictate("", withheld="Altyazı M.K.")
+    assert "Altyazı" not in h.outcomes[-1].note
+
+
+def test_invented_text_survives_the_recording_limit_note(h):
+    h.ready().controller.toggle()
+    h.recorder.limit_reached.emit()
+    h.recorder.finished.emit(ONE_SECOND)
+    h.transcriber.done.emit(Transcript("", "Altyazı M.K.", 0.3, 600.0))
+    outcome = h.outcomes[-1]
+    assert outcome.withheld == "Altyazı M.K." and "10 dakikaya ulaştı" in outcome.note
 
 
 def test_fallback_method_is_reported(h):

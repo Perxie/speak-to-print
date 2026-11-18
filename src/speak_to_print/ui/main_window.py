@@ -250,7 +250,7 @@ class MainWindow(QWidget):
         self.shortcut.setStyleSheet(f"color: {theme.RED};")
 
     def show_outcome(self, outcome: Outcome) -> None:
-        self.detail.setText(outcome.note)
+        self.detail.setText(outcome.shown_note)
 
     def show_notice(self, text: str) -> None:
         self.detail.setText(text)

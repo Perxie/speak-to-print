@@ -11,7 +11,7 @@ sahte nesnelerle test edilebilir (tests/test_controller.py).
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Protocol
 
@@ -38,7 +38,13 @@ class Outcome:
 
     text: str  # çevrilen metin (boş olabilir)
     pasted: bool  # imlecin olduğu yere yazıldı mı
-    note: str  # kullanıcıya gösterilecek kısa açıklama
+    note: str  # kısa açıklama; günlüğe de yazılır, bu yüzden dikte edilen ya da uydurulan metni içermez
+    withheld: str = ""  # modelin uydurduğu, yazılmayan metin: ekranda gösterilir, günlüğe yazılmaz
+
+    @property
+    def shown_note(self) -> str:
+        """Ekranda gösterilen not: uydurulan metin varsa sonuna eklenir."""
+        return f"{self.note} Uydurulan: “{self.withheld}”" if self.withheld else self.note
 
 
 # Protocol: Java'daki interface gibi; aynı yöntemlere sahip her nesne kabul edilir.
@@ -208,7 +214,8 @@ class Controller(QObject):
         self._set_state(State.IDLE)
         if not transcript.text:
             if transcript.withheld:
-                self._emit_outcome(Outcome("", False, f"Konuşma anlaşılamadı (model şunu uydurdu, yazılmadı: “{transcript.withheld}”)."))
+                self._emit_outcome(Outcome("", False, "Konuşma anlaşılamadı; model bir şey uydurdu, yazılmadı.",
+                                           withheld=transcript.withheld))
             else:
                 self._emit_outcome(Outcome("", False, "Konuşma algılanmadı; hiçbir şey yazılmadı."))
             return
@@ -225,7 +232,7 @@ class Controller(QObject):
         """Diktenin sonucunu yayar; süre sınırında bitirildiyse notun başına bunu ekler."""
         if self._stopped_at_limit:
             self._stopped_at_limit = False
-            outcome = Outcome(outcome.text, outcome.pasted, f"{LIMIT_NOTE} {outcome.note}")
+            outcome = replace(outcome, note=f"{LIMIT_NOTE} {outcome.note}")
         self.outcome.emit(outcome)
 
     def _paste(self, text: str) -> tuple[bool, str]:
