@@ -15,6 +15,7 @@ from fakes import FakeRecorder, FakeTranscriber
 from speak_to_print.app import Application
 from speak_to_print.config import SAMPLE_RATE, SHORTCUT_ID
 from speak_to_print.controller import State
+from speak_to_print import history as history_module
 from speak_to_print.history import History
 from speak_to_print.settings import Settings
 from speak_to_print.transcriber import Transcript
@@ -264,3 +265,14 @@ def test_history_tooltip_shows_markup_literally(env):
 def test_history_tooltip_of_plain_text_is_unchanged(env):
     env.dictate("Düz bir cümle, 3 < 5.")
     assert env.app.window.history.item(0).toolTip() == "Düz bir cümle, 3 < 5."
+
+
+def test_history_list_never_shows_more_than_the_database_keeps(env, monkeypatch):
+    # Veritabanı en yeni MAX_ENTRIES kaydı tutuyor; liste de fazlasını göstermemeli
+    # (yoksa silinmiş kayıtlar listede kalır ve onlarda "Sil" boşa çalışır).
+    monkeypatch.setattr(history_module, "MAX_ENTRIES", 3)
+    for n in range(5):
+        env.dictate(f"Dikte {n}.")
+    window = env.app.window
+    shown = [window.history.item(row).data(Qt.ItemDataRole.UserRole).text for row in range(window.history.count())]
+    assert shown == [entry.text for entry in env.app.history.recent()] == ["Dikte 4.", "Dikte 3.", "Dikte 2."]

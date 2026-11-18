@@ -5,7 +5,7 @@
 ## Şu an
 - Son yapılan: Güvenlik düzeltmelerinin hepsi bitti ve kullanıcı denedi (1–8, 9a, 9c; 9b'yi kullanıcı istemedi): pano yöntemi, geçmiş dosyası (`secure_delete`), tek kopya soketi oturum klasöründe, etiketler düz metin, model çıktısı tek satır, sürümler sabit, kayıt 10 dk sınırı, ses dosyaları özel klasörde, KWin araçlarına zaman aşımı, kişisel veri klasörleri 0700. Öncesinde v1.0.0 etiketlendi. Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
 - Yarım kalan: Optimizasyon, 4. adım (uygulamayı iyileştirme). Skill iyileştirildi ve kuruldu (3. adım bitti). Liste ve sıra: `calisma/optimizasyon/DEVAM.md` (git dışı). Raporlar git dışı: `OPTIMIZATIONS.md`, `OPTIMIZATIONS_claude.md`.
-- Sıradaki: İyileştirme 1 (ısınma) ve 2 (erken model yüklemesi) bitti, kullanıcı denedi (gerçek açılış 1,72–1,89 sn). Kullanıcının onayıyla iyileştirme 3 (geçmiş listesi 200'ü aşıyor). Liste: `calisma/optimizasyon/DEVAM.md`. Dönülecek nokta `v1.1.0`.
+- Sıradaki: İyileştirme 1–3 bitti, kullanıcı denedi. Kullanıcı geçmişin 200 yerine 30 kayıt tutmasını istedi (yapılıyor). Sonra iyileştirme 4 (günlük gizliliği). Liste: `calisma/optimizasyon/DEVAM.md`. Dönülecek nokta `v1.1.0`.
 
 ## Yapılacaklar
 - [x] Faz 0 — Riskli parçaların denemeleri (GPU, mikrofon, model seçimi, kısayol, yazma yöntemi, odak almayan pencere).

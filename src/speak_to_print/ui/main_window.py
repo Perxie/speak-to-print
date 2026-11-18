@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (QHBoxLayout, QLabel, QListWidget, QListWidgetItem
 
 from ..controller import Outcome, State
 from ..desktop_entry import APP_NAME
+from .. import history
 from ..history import Entry
 from . import theme
 from .widgets import CropFrame, HistoryDelegate, Keycap, PrintedText, Rule, Switch
@@ -264,8 +265,14 @@ class MainWindow(QWidget):
         self._on_selection_changed()
 
     def add_history(self, entry: Entry) -> None:
-        """Yeni kaydı en üste ekler ve seçer."""
+        """Yeni kaydı en üste ekler ve seçer.
+
+        Veritabanı en yeni `history.MAX_ENTRIES` kaydı tutar; liste de fazlasını göstermez,
+        yoksa veritabanından silinmiş kayıtlar listede kalırdı.
+        """
         self.history.insertItem(0, self._item(entry))
+        while self.history.count() > history.MAX_ENTRIES:
+            self.history.takeItem(self.history.count() - 1)
         self.history.setCurrentRow(0)
 
     def _item(self, entry: Entry) -> QListWidgetItem:
