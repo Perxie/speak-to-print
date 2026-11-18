@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-MAX_ENTRIES = 200
+MAX_ENTRIES = 30  # kullanıcı seçti (önceden 200); fazlası bir sonraki eklemede silinir
 
 # Dosya biçiminin sürümü, dosyanın içinde `PRAGMA user_version` olarak durur.
 # 1: silinen metinler sıfırlanıyor ve bundan önce silinenlerin kalıntıları bir
