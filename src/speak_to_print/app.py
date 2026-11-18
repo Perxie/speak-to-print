@@ -475,6 +475,7 @@ class Application(QObject):
         self._focus_timer.stop()
         self.popup.hide()
         self.editor.hide()
+        self.settings_dialog.flush()  # bekleyen ayar değişikliği; aşağıdaki os._exit yolunda da kaybolmasın
         self.settings_dialog.hide()
         self.tray.hide()
         if self._writer is not None:

@@ -4,6 +4,8 @@ Bu testler pencerelerin görünümünü değil davranışını sınar; tasarım 
 Dayandıkları adlar (ör. `popup.pause_button`, `popup.text`) arayüz sınıflarının sabit yüzeyidir.
 """
 
+import time
+
 import numpy as np
 import pytest
 from PySide6.QtCore import QEvent, QPointF, QSettings, Qt
@@ -214,6 +216,7 @@ def test_settings_dialog_writes_settings(env):
     dialog.mode_hold.click()
     dialog.vocabulary.setPlainText("commit\n\nrefactor")
     dialog.keep_history.click()
+    _run_event_loop_for(0.8)  # sözlük kısa bir beklemeden sonra kaydedilir
     assert env.settings.hotkey_mode == "hold" and env.settings.vocabulary == ["commit", "refactor"]
     assert env.settings.keep_history is False
     env.press()  # basılı tut kipi: bırakınca biter
@@ -285,3 +288,81 @@ def test_invented_text_is_shown_but_never_written_to_the_log(env, caplog):
     env.result("", withheld='Uydurma 4711 "düz tırnaklı"')
     assert "Uydurma 4711" in env.app.popup._message.text() and "Uydurma 4711" in env.app.window.detail.text()
     assert "Uydurma 4711" not in caplog.text and "Sonuç:" in caplog.text
+
+
+def _run_event_loop_for(seconds):
+    """Zamanlayıcılar (ör. ayarların gecikmeli kaydı) çalışsın diye olay döngüsünü kısa süre döndürür."""
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        QApplication.processEvents()
+        time.sleep(0.01)
+
+
+def _count_saves(env):
+    saves = []
+    env.settings.changed.connect(lambda: saves.append(1))
+    return saves
+
+
+def test_typing_in_the_vocabulary_saves_once_after_a_short_pause(env):
+    dialog = env.app.settings_dialog
+    dialog.open()
+    saves = _count_saves(env)
+    for letter in "kubernetes":
+        dialog.vocabulary.insertPlainText(letter)
+    assert saves == []  # her harfte diske yazılmıyor
+    _run_event_loop_for(0.8)
+    assert saves == [1] and env.settings.vocabulary == ["kubernetes"]
+
+
+def test_moving_the_volume_slider_saves_once(env):
+    dialog = env.app.settings_dialog
+    dialog.open()
+    saves = _count_saves(env)
+    for value in range(10, 60, 5):
+        dialog.sound_volume.setValue(value)
+    assert saves == []
+    _run_event_loop_for(0.8)
+    assert saves == [1] and env.settings.sound_volume == 55
+
+
+def test_closing_the_settings_window_saves_a_pending_change_at_once(env):
+    dialog = env.app.settings_dialog
+    dialog.open()
+    dialog.vocabulary.setPlainText("kubernetes")
+    dialog.hide()
+    assert env.settings.vocabulary == ["kubernetes"]
+
+
+def test_sound_test_button_uses_the_volume_on_the_slider(env, monkeypatch):
+    played_at = []
+    monkeypatch.setattr(env.app.sounds, "play", lambda name, force=False: played_at.append(env.settings.sound_volume))
+    dialog = env.app.settings_dialog
+    dialog.open()
+    dialog.sound_volume.setValue(80)
+    dialog.test_sound_button.click()
+    assert played_at == [80]
+
+
+def test_hidden_settings_window_does_not_rebuild_the_microphone_list(env, monkeypatch):
+    dialog = env.app.settings_dialog
+    rebuilds = []
+    monkeypatch.setattr(dialog, "_fill_microphones", lambda: rebuilds.append(1))
+    env.app.popup.auto_paste.click()  # küçük penceredeki anahtar ayarı değiştirir
+    assert rebuilds == []
+
+
+def test_open_settings_window_keeps_its_microphone_list_on_unrelated_changes(env, monkeypatch):
+    dialog = env.app.settings_dialog
+    dialog.open()
+    rebuilds = []
+    monkeypatch.setattr(dialog, "_fill_microphones", lambda: rebuilds.append(1))
+    dialog.keep_history.click()
+    assert rebuilds == [] and env.settings.keep_history is False
+
+
+def test_saving_with_nothing_pending_does_not_overwrite_settings_with_stale_values(env):
+    # Kapalı pencere bileşenlerini güncellemiyor; bekleyen bir değişiklik yoksa kaydetme bir şey yazmamalı.
+    env.settings.vocabulary = ["başka yerden"]
+    env.app.settings_dialog.flush()
+    assert env.settings.vocabulary == ["başka yerden"]

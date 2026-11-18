@@ -5,7 +5,7 @@ Dört bölüm: kısayol, ses, metin ve sözlük. Görsel dil için bkz. docs/tas
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtMultimedia import QMediaDevices
 from PySide6.QtWidgets import (QComboBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QRadioButton, QSlider,
                                QVBoxLayout, QWidget)
@@ -36,6 +36,11 @@ def _help(text: str) -> QLabel:
     label.setStyleSheet(f"color: {theme.LEAD};")
     label.setWordWrap(True)
     return label
+
+
+# Sözlük ve ses yüksekliği, değişiklik durduktan bu kadar sonra kaydedilir (her harfte ve sürgünün
+# her adımında diske yazılmasın). Pencere kapanınca ya da "Sesi dene"ye basılınca hemen kaydedilir.
+SAVE_DELAY_MS = 500
 
 
 class SettingsDialog(QWidget):
@@ -150,7 +155,7 @@ class SettingsDialog(QWidget):
         layout.addLayout(bottom)
 
         self.shortcut_button.clicked.connect(self.configure_shortcut_clicked)
-        self.test_sound_button.clicked.connect(self.test_sound_clicked)
+        self.test_sound_button.clicked.connect(self._on_test_sound)
         self.mode_toggle.toggled.connect(self._on_mode_changed)
         self.microphone.activated.connect(self._on_microphone_chosen)
         self.output_method.activated.connect(
@@ -163,10 +168,16 @@ class SettingsDialog(QWidget):
         self.vocabulary.textChanged.connect(self._on_vocabulary_changed)
         close_button.clicked.connect(self.hide)
 
-        # Mikrofon takılıp çıkarılınca listeyi güncelle.
+        self._save_timer = QTimer(self)
+        self._save_timer.setSingleShot(True)
+        self._save_timer.setInterval(SAVE_DELAY_MS)
+        self._save_timer.timeout.connect(self._save)
+
+        # Pencere açıkken: mikrofon takılıp çıkarılınca listeyi, ayar değişince değerleri güncelle.
+        # Kapalıyken bir şey yapılmaz; open() her şeyi baştan doldurur.
         self._devices = QMediaDevices(self)
-        self._devices.audioInputsChanged.connect(self.refresh)
-        settings.changed.connect(self.refresh)
+        self._devices.audioInputsChanged.connect(self._on_devices_changed)
+        settings.changed.connect(self._on_settings_changed)
         self.refresh()
 
     def set_shortcut(self, trigger: str) -> None:
@@ -179,7 +190,54 @@ class SettingsDialog(QWidget):
         self.activateWindow()
 
     def refresh(self) -> None:
-        """Bileşenleri ayarların güncel değerleriyle doldurur (sinyal döngüsü oluşturmadan)."""
+        """Bileşenleri ve mikrofon listesini ayarların güncel değerleriyle doldurur."""
+        self._show_values()
+        self._refreshing = True
+        try:
+            self._fill_microphones()
+        finally:
+            self._refreshing = False
+
+    def flush(self) -> None:
+        """Bekleyen sözlük ve ses yüksekliği değişikliğini hemen kaydeder.
+
+        Bekleyen değişiklik yoksa hiçbir şey yazılmaz: pencere kapalıyken bileşenler güncellenmediği
+        için eski değerlerle ayarların üstüne yazılmasın.
+        """
+        if self._save_timer.isActive():
+            self._save_timer.stop()
+            self._save()
+
+    def _save(self) -> None:
+        self._settings.vocabulary = self._vocabulary_terms()
+        self._settings.sound_volume = self.sound_volume.value()
+
+    def hideEvent(self, event) -> None:  # noqa: N802 — Qt'nin yöntem adı
+        self.flush()
+        super().hideEvent(event)
+
+    def _on_test_sound(self) -> None:
+        self.flush()  # ses, sürgünün o anki değeriyle çalsın
+        self.test_sound_clicked.emit()
+
+    def _on_settings_changed(self) -> None:
+        if self.isVisible():
+            self._show_values()
+
+    def _on_devices_changed(self) -> None:
+        if self.isVisible():
+            self._refreshing = True
+            try:
+                self._fill_microphones()
+            finally:
+                self._refreshing = False
+
+    def _show_values(self) -> None:
+        """Bileşenleri ayarların güncel değerleriyle doldurur (sinyal döngüsü oluşturmadan).
+
+        Kaydedilmeyi bekleyen bir sözlük ya da ses değişikliği varsa onlara dokunulmaz.
+        """
+        pending = self._save_timer.isActive()
         self._refreshing = True
         try:
             settings = self._settings
@@ -190,10 +248,10 @@ class SettingsDialog(QWidget):
             self.use_prompt.setChecked(settings.use_prompt)
             self.keep_history.setChecked(settings.keep_history)
             self.sounds.setChecked(settings.sounds)
-            self.sound_volume.setValue(settings.sound_volume)
-            if self._vocabulary_terms() != settings.vocabulary:
-                self.vocabulary.setPlainText("\n".join(settings.vocabulary))
-            self._fill_microphones()
+            if not pending:
+                self.sound_volume.setValue(settings.sound_volume)
+                if self._vocabulary_terms() != settings.vocabulary:
+                    self.vocabulary.setPlainText("\n".join(settings.vocabulary))
         finally:
             self._refreshing = False
 
@@ -217,13 +275,13 @@ class SettingsDialog(QWidget):
         if not self._refreshing:
             self._settings.hotkey_mode = "hold" if self.mode_hold.isChecked() else "toggle"
 
-    def _on_volume_changed(self, value: int) -> None:
+    def _on_volume_changed(self, _value: int) -> None:
         if not self._refreshing:
-            self._settings.sound_volume = value
+            self._save_timer.start()
 
     def _on_microphone_chosen(self, _index: int) -> None:
         self._settings.microphone_id = self.microphone.currentData() or ""
 
     def _on_vocabulary_changed(self) -> None:
         if not self._refreshing:
-            self._settings.vocabulary = self._vocabulary_terms()
+            self._save_timer.start()
