@@ -57,3 +57,9 @@ def test_sound_volume_is_clamped_and_persists(tmp_path):
     assert s.sound_volume == 100
     s.sound_volume = 20
     assert make(tmp_path).sound_volume == 20
+
+
+def test_vocabulary_text_is_split_into_terms_in_one_place():
+    from speak_to_print.settings import parse_terms
+
+    assert parse_terms("  commit \n\n pull request\n ") == ["commit", "pull request"]

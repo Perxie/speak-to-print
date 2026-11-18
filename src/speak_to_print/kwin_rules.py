@@ -14,10 +14,11 @@ ve ilk değişiklikten önce yedeği alınır.
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 from pathlib import Path
+
+from .config import xdg_home
 
 RULE_ID = "speak-to-print-dinleme"  # kuralın ayar dosyasındaki bölüm adı
 EDITOR_RULE_ID = "speak-to-print-duzenleme"
@@ -36,7 +37,7 @@ def _run(command: list[str], check: bool) -> None:
 
 
 def _config_path() -> Path:
-    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "kwinrulesrc"
+    return xdg_home("XDG_CONFIG_HOME", ".config") / "kwinrulesrc"
 
 
 def _read(group: str, key: str) -> str:
@@ -85,14 +86,12 @@ def _reload_kwin() -> None:
     _run(["qdbus6", "org.kde.KWin", "/KWin", "org.kde.KWin.reconfigure"], check=False)
 
 
-def _backup_once() -> Path | None:
-    """Ayar dosyasının ilk hâlini bir kez yedekler; yedek yeni alındıysa yolunu döndürür."""
+def _backup_once() -> None:
+    """Ayar dosyasının ilk hâlini bir kez yedekler."""
     config = _config_path()
     backup = config.with_name(config.name + ".speak-to-print.yedek")
     if config.exists() and not backup.exists():
         shutil.copy2(config, backup)
-        return backup
-    return None
 
 
 def _install_rule(rule_id: str, description: str, app_id: str, title: str, x: int, y: int, accept_focus: bool) -> None:
@@ -142,45 +141,36 @@ def _remove_rule(rule_id: str) -> bool:
     return True
 
 
-# ---------------------------------------------------------------- dinleme penceresi (odak almaz)
-
-def install_popup_rule(app_id: str, title: str, x: int, y: int) -> Path | None:
-    """Kuralı yazar ya da günceller. İlk seferde alınan yedeğin yolunu döndürür."""
-    backup = _backup_once()
-    _install_rule(RULE_ID, "Speak to Print dinleme penceresi", app_id, title, x, y, accept_focus=False)
+def _ensure_rule(rule_id: str, description: str, app_id: str, title: str, x: int, y: int, accept_focus: bool) -> bool:
+    """Kural yoksa ya da başlığı/konumu farklıysa yazar ve KWin'e yeniden okutur. Bir şey değiştiyse True."""
+    if _rule_matches(rule_id, app_id, title, x, y, accept_focus):
+        return False
+    _backup_once()
+    _install_rule(rule_id, description, app_id, title, x, y, accept_focus)
     _reload_kwin()
-    return backup
+    return True
+
+
+def _remove_and_reload(rule_id: str) -> bool:
+    removed = _remove_rule(rule_id)
+    if removed:
+        _reload_kwin()
+    return removed
 
 
 def ensure_popup_rule(app_id: str, title: str, x: int, y: int) -> bool:
-    """Kural yoksa ya da başlığı/konumu farklıysa yazar. Bir şey değiştiyse True döner."""
-    if _rule_matches(RULE_ID, app_id, title, x, y, accept_focus=False):
-        return False
-    install_popup_rule(app_id, title, x, y)
-    return True
+    """Dinleme penceresi: odak almaz (tıklansa da klavye odağı yazı yazılan pencerede kalır)."""
+    return _ensure_rule(RULE_ID, "Speak to Print dinleme penceresi", app_id, title, x, y, accept_focus=False)
 
 
 def remove_popup_rule() -> bool:
-    removed = _remove_rule(RULE_ID)
-    if removed:
-        _reload_kwin()
-    return removed
+    return _remove_and_reload(RULE_ID)
 
-
-# ---------------------------------------------------------------- düzenleme penceresi (odak alır)
 
 def ensure_editor_rule(app_id: str, title: str, x: int, y: int) -> bool:
-    """Düzenleme penceresini sabit bir yere ve üste koyan kural. Bu pencere odak alabilir."""
-    if _rule_matches(EDITOR_RULE_ID, app_id, title, x, y, accept_focus=True):
-        return False
-    _backup_once()
-    _install_rule(EDITOR_RULE_ID, "Speak to Print düzenleme penceresi", app_id, title, x, y, accept_focus=True)
-    _reload_kwin()
-    return True
+    """Düzenleme penceresi: sabit bir yerde ve üstte durur; odak alabilir."""
+    return _ensure_rule(EDITOR_RULE_ID, "Speak to Print düzenleme penceresi", app_id, title, x, y, accept_focus=True)
 
 
 def remove_editor_rule() -> bool:
-    removed = _remove_rule(EDITOR_RULE_ID)
-    if removed:
-        _reload_kwin()
-    return removed
+    return _remove_and_reload(EDITOR_RULE_ID)

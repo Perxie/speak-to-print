@@ -108,9 +108,8 @@ class EditorWindow(Card):
         self.text.setFocus()
 
     def set_state(self, state: State) -> None:
-        listening = state in (State.LISTENING, State.PAUSED)
-        self.listen_button.setText("Bitir" if listening else "Dinlemeyi başlat")
-        self.listen_button.setEnabled(state in (State.IDLE, State.LISTENING, State.PAUSED))
+        self.listen_button.setText(state.listen_label)
+        self.listen_button.setEnabled(state.can_toggle_listening)
 
     def show_note(self, text: str) -> None:
         self.note.setText(text)

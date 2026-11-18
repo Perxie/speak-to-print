@@ -10,15 +10,6 @@ from ..controller import State
 from ..desktop_entry import APP_NAME
 from . import theme
 
-COLORS = {
-    State.LOADING: theme.LEAD,
-    State.IDLE: theme.PAPER,
-    State.LISTENING: theme.MAGENTA,
-    State.PAUSED: theme.LEAD,
-    State.TRANSCRIBING: theme.CYAN,
-    State.FAILED: theme.RED,
-}
-
 # Uygulamanın işareti: ses çizgisinden beş çizgi (x, yükseklik); 64×64'lük bir karede.
 BARS = ((10, 12), (20, 28), (30, 42), (40, 22), (50, 10))
 
@@ -30,7 +21,7 @@ def state_icon(state: State) -> QIcon:
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.setPen(Qt.PenStyle.NoPen)
-    painter.setBrush(QColor(COLORS[state]))
+    painter.setBrush(QColor(theme.STATE_COLORS[state]))
     for x, height in BARS:
         painter.drawRoundedRect(QRectF(x - 1, 32 - height / 2, 8, height), 4, 4)
     painter.end()
@@ -63,8 +54,8 @@ class Tray(QObject):
     def set_state(self, state: State) -> None:
         self._icon.setIcon(state_icon(state))
         self._icon.setToolTip(f"{APP_NAME}: {state.value}")
-        self._listen_action.setText("Bitir" if state in (State.LISTENING, State.PAUSED) else "Dinlemeyi başlat")
-        self._listen_action.setEnabled(state in (State.IDLE, State.LISTENING, State.PAUSED))
+        self._listen_action.setText(state.listen_label)
+        self._listen_action.setEnabled(state.can_toggle_listening)
 
     def hide(self) -> None:
         self._icon.hide()

@@ -49,7 +49,7 @@ class Recorder(QObject):
     """Sistemin varsayılan mikrofonundan 16 kHz mono kayıt alır."""
 
     level = Signal(float)  # son ses paketinin tepe seviyesi, 0..1
-    notice = Signal(str)  # kullanıcıya gösterilecek kısa bilgi
+    notice = Signal(str, bool)  # kullanıcıya gösterilecek kısa bilgi, sorun mu
     finished = Signal(object)  # kayıt bitti: float32 numpy dizisi (-1..1)
     failed = Signal(str)
     limit_reached = Signal()  # kayıt MAX_RECORDING_SECONDS'a ulaştı (bir kez); bitirmek denetleyicinin işi
@@ -81,7 +81,7 @@ class Recorder(QObject):
         device, fell_back = choose_microphone(
             self.preferred_device_id, {device_id(mic): mic for mic in microphones()}, default_microphone())
         if fell_back and device is not None:
-            self.notice.emit("Seçili mikrofon bağlı değil; sistemin varsayılan mikrofonu kullanılıyor.")
+            self.notice.emit("Seçili mikrofon bağlı değil; sistemin varsayılan mikrofonu kullanılıyor.", True)
         if device is None:
             self.failed.emit("Mikrofon bulunamadı. KDE'nin ses ayarlarından bir giriş aygıtı seçin.")
             return False

@@ -18,7 +18,7 @@ from PySide6.QtWidgets import QApplication
 
 from . import desktop_entry, kwin_rules
 from .audio import Recorder
-from .config import (EDITOR_GAP, EDITOR_SIZE, EDITOR_TITLE, POPUP_BOTTOM_MARGIN, POPUP_SIZE, POPUP_TITLE,
+from .config import (EDITOR_GAP, EDITOR_SIZE, EDITOR_TITLE, POPUP_BOTTOM_MARGIN, POPUP_SIZE, POPUP_TITLE, xdg_home,
                      SHORTCUT_DESCRIPTION, SHORTCUT_ID)
 from .controller import Controller, Outcome, State
 from .history import History
@@ -41,8 +41,7 @@ _IMPORTED_AT = time.monotonic()
 
 
 def log_file_path() -> Path:
-    state_home = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local" / "state")
-    return state_home / "speak-to-print" / "speak-to-print.log"
+    return xdg_home("XDG_STATE_HOME", ".local/state") / "speak-to-print" / "speak-to-print.log"
 
 
 def _setup_logging() -> None:
@@ -165,9 +164,10 @@ def _uninstall() -> int:
     print("KWin kuralı (dinleme penceresi):", "kaldırıldı" if kwin_rules.remove_popup_rule() else "zaten yok")
     print("KWin kuralı (düzenleme penceresi):", "kaldırıldı" if kwin_rules.remove_editor_rule() else "zaten yok")
     print("\nDokunulmayanlar (isterseniz elle silin; tam liste: docs/proje-disi-dosyalar.md):")
-    print("  ayarlar :", Path.home() / ".config" / "speak-to-print")
-    print("  geçmiş  :", Path.home() / ".local" / "share" / "speak-to-print")
-    print("  günlük  :", log_file_path().parent)
+    history_dir, log_dir, settings_dir = _personal_data_dirs()
+    print("  ayarlar :", settings_dir)
+    print("  geçmiş  :", history_dir)
+    print("  günlük  :", log_dir)
     print("  model   : ~/.cache/huggingface  (uv run hf cache rm model/Systran/faster-whisper-large-v3)")
     print("  kısayol : KDE Sistem Ayarları → Klavye → Kısayollar → Speak to Print")
     print("\nUygulamayı yeniden açarsanız Kickoff kaydı ve kurallar yeniden yazılır.")
@@ -439,12 +439,9 @@ class Application(QObject):
         self.window.show_outcome(outcome)
         self._remember(outcome.text)
 
-    def _on_notice(self, text: str) -> None:
-        log.info("Bilgi: %s", text)
-        # Sorun bildiren iletiler küçük pencerede ayrı renkle gösterilir.
-        problem = any(word in text for word in ("kayboldu", "bulunamadı", "hatası", "yüklenemediği", "desteklemiyor",
-                                                "açılamadı", "bağlı değil"))
-        self.popup.show_notice(text, problem)
+    def _on_notice(self, text: str, problem: bool) -> None:
+        log.info("%s: %s", "Sorun" if problem else "Bilgi", text)
+        self.popup.show_notice(text, problem)  # sorunlar küçük pencerede ayrı renkle gösterilir
         self.window.show_notice(text)
 
     def _on_bound(self, triggers: dict) -> None:

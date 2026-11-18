@@ -21,13 +21,15 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from .config import xdg_home
+
 APP_ID = "io.github.perxie.SpeakToPrint"
 APP_NAME = "Speak to Print"
 ICON_PATH = Path(__file__).resolve().parent / "assets" / "icon.svg"
 
 
 def _data_home() -> Path:
-    return Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
+    return xdg_home("XDG_DATA_HOME", ".local/share")
 
 
 def desktop_file_path() -> Path:

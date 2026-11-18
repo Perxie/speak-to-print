@@ -31,6 +31,20 @@ class State(Enum):
     TRANSCRIBING = "Çevriliyor"
     FAILED = "Model yüklenemedi"
 
+    @property
+    def is_listening(self) -> bool:
+        return self in (State.LISTENING, State.PAUSED)
+
+    @property
+    def can_toggle_listening(self) -> bool:
+        """Dinleme düğmesi tıklanabilir mi (dinlemeyi başlatabilir ya da bitirebilir)."""
+        return self in (State.IDLE, State.LISTENING, State.PAUSED)
+
+    @property
+    def listen_label(self) -> str:
+        """Dinleme düğmesinin yazısı (ana pencere, düzenleyici, tepsi menüsü)."""
+        return "Bitir" if self.is_listening else "Dinlemeyi başlat"
+
 
 @dataclass(frozen=True)
 class Outcome:
@@ -79,7 +93,7 @@ class SettingsLike(Protocol):
 class Controller(QObject):
     state_changed = Signal(object)  # State
     outcome = Signal(object)  # Outcome
-    notice = Signal(str)  # kısa bilgi (ör. "Kayıt çok kısaydı")
+    notice = Signal(str, bool)  # kısa bilgi (ör. "Kayıt çok kısaydı"), sorun mu (küçük pencerede kırmızı)
 
     def __init__(
         self,
@@ -129,11 +143,11 @@ class Controller(QObject):
         elif self.state in (State.LISTENING, State.PAUSED):
             return
         elif self.state is State.LOADING:
-            self.notice.emit("Model hâlâ yükleniyor; birkaç saniye sonra yeniden deneyin.")
+            self.notice.emit("Model hâlâ yükleniyor; birkaç saniye sonra yeniden deneyin.", False)
         elif self.state is State.TRANSCRIBING:
-            self.notice.emit("Önceki konuşma hâlâ çevriliyor.")
+            self.notice.emit("Önceki konuşma hâlâ çevriliyor.", False)
         else:
-            self.notice.emit(f"Model yüklenemediği için dinlenemiyor: {self.failure}")
+            self.notice.emit(f"Model yüklenemediği için dinlenemiyor: {self.failure}", True)
 
     def pause_resume(self) -> None:
         if self.state is State.LISTENING:
@@ -152,7 +166,7 @@ class Controller(QObject):
         if self.state in (State.LISTENING, State.PAUSED):
             self._recorder.cancel()
             self._set_state(State.IDLE)
-            self.notice.emit("İptal edildi; hiçbir şey yazılmadı.")
+            self.notice.emit("İptal edildi; hiçbir şey yazılmadı.", False)
 
     def paste_text(self, text: str) -> None:
         """Düzenlenmiş metni imlecin olduğu yere yazar ve son metin olarak saklar."""
@@ -184,14 +198,14 @@ class Controller(QObject):
     def _on_recorder_failed(self, message: str) -> None:
         if self.state in (State.LISTENING, State.PAUSED, State.TRANSCRIBING):
             self._set_state(State.IDLE)
-        self.notice.emit(message)
+        self.notice.emit(message, True)  # mikrofon arızası
 
     def _on_recording_limit(self) -> None:
         """Kayıt üst sınıra ulaştı: Bitir'e basılmış gibi bitirip çevir (kayıt atılmaz)."""
         if self.state not in (State.LISTENING, State.PAUSED):
             return
         self._stopped_at_limit = True
-        self.notice.emit(LIMIT_NOTE)
+        self.notice.emit(LIMIT_NOTE, False)
         self.finish()
 
     def _on_recorded(self, samples) -> None:
@@ -199,14 +213,14 @@ class Controller(QObject):
             return
         if len(samples) < MIN_RECORDING_SECONDS * SAMPLE_RATE:
             self._set_state(State.IDLE)
-            self.notice.emit("Kayıt çok kısaydı; hiçbir şey yazılmadı.")
+            self.notice.emit("Kayıt çok kısaydı; hiçbir şey yazılmadı.", False)
             return
         self._transcriber.transcribe(samples, self._settings.use_prompt, list(self._settings.vocabulary))
 
     def _on_transcribe_failed(self, message: str) -> None:
         if self.state is State.TRANSCRIBING:
             self._set_state(State.IDLE)
-        self.notice.emit(f"Çeviri hatası: {message}")
+        self.notice.emit(f"Çeviri hatası: {message}", True)
 
     def _on_transcribed(self, transcript) -> None:
         if self.state is not State.TRANSCRIBING:

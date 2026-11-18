@@ -7,7 +7,7 @@ class FakeRecorder(QObject):
     level = Signal(float)
     finished = Signal(object)
     failed = Signal(str)
-    notice = Signal(str)
+    notice = Signal(str, bool)  # metin, sorun mu
     limit_reached = Signal()
 
     def __init__(self):

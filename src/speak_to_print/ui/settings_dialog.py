@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (QComboBox, QGridLayout, QHBoxLayout, QLabel, QPus
 
 from ..audio import default_microphone, device_id, microphones
 from ..desktop_entry import APP_NAME
-from ..settings import Settings
+from ..settings import Settings, parse_terms
 from . import theme
 from .widgets import CropFrame, Keycap, PrintedText, Rule, Switch
 
@@ -280,7 +280,7 @@ class SettingsDialog(QWidget):
         self.microphone.setCurrentIndex(max(0, self.microphone.findData(chosen)))
 
     def _vocabulary_terms(self) -> list[str]:
-        return [line.strip() for line in self.vocabulary.toPlainText().splitlines() if line.strip()]
+        return parse_terms(self.vocabulary.toPlainText())
 
     def _on_mode_changed(self, _checked: bool) -> None:
         if not self._refreshing:

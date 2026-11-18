@@ -13,6 +13,11 @@ HOTKEY_MODES = ("toggle", "hold")  # bas başlat/bas bitir · basılı tut, konu
 OUTPUT_METHODS = ("auto", "clipboard")  # kwin-type (olmazsa pano) · her zaman pano
 
 
+def parse_terms(text: str) -> list[str]:
+    """Sözlük metnini terimlere ayırır: her satır bir terim, boşluklar kırpılır, boş satırlar atılır."""
+    return [line.strip() for line in text.splitlines() if line.strip()]
+
+
 def default_store() -> QSettings:
     """Ayarların varsayılan yeri: ~/.config/speak-to-print/speak-to-print.conf."""
     return QSettings("speak-to-print", "speak-to-print")
@@ -125,7 +130,7 @@ class Settings(QObject):
     @property
     def vocabulary(self) -> list[str]:
         """Sözlük: modele önceden verilen terimler (her biri ayrı satırda saklanır)."""
-        return [line.strip() for line in self._str("vocabulary", "").splitlines() if line.strip()]
+        return parse_terms(self._str("vocabulary", ""))
 
     @vocabulary.setter
     def vocabulary(self, terms: list[str]) -> None:

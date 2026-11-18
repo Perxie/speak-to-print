@@ -23,15 +23,6 @@ from .widgets import CropFrame, HistoryDelegate, Keycap, PrintedText, Rule, Swit
 
 PREVIEW_LENGTH = 90  # listede gösterilen metnin en fazla uzunluğu
 
-STATUS = {  # durum → (yazı, renk)
-    State.LOADING: ("Model yükleniyor", theme.LEAD),
-    State.IDLE: ("Hazır", theme.PAPER),
-    State.LISTENING: ("Dinliyor", theme.MAGENTA),
-    State.PAUSED: ("Beklemede", theme.LEAD),
-    State.TRANSCRIBING: ("Çevriliyor", theme.CYAN),
-    State.FAILED: ("Model yüklenemedi", theme.RED),
-}
-
 
 def _summary(entry: Entry) -> str:
     text = " ".join(entry.text.split())
@@ -205,9 +196,8 @@ class MainWindow(QWidget):
 
     def set_state(self, state: State, failure: str = "") -> None:
         self._set_status(state)
-        listening = state in (State.LISTENING, State.PAUSED)
-        self.listen_button.setText("Bitir" if listening else "Dinlemeyi başlat")
-        self.listen_button.setEnabled(state in (State.IDLE, State.LISTENING, State.PAUSED))
+        self.listen_button.setText(state.listen_label)
+        self.listen_button.setEnabled(state.can_toggle_listening)
         if state is State.FAILED:
             self.detail.setText(failure)
         elif state is State.IDLE:
@@ -317,9 +307,8 @@ class MainWindow(QWidget):
     # ------------------------------------------------------------ iç işler
 
     def _set_status(self, state: State) -> None:
-        text, color = STATUS[state]
-        self.status.setText(text)
-        self.status.setStyleSheet(f"color: {color};")
+        self.status.setText(state.value)
+        self.status.setStyleSheet(f"color: {theme.STATE_COLORS[state]};")
 
     def _show_hint(self) -> None:
         if self._trigger:

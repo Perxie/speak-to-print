@@ -452,3 +452,15 @@ def test_typed_text_stays_upright(env):
         field.setPlainText("Yazılan metin düz kalır.")
         assert _drawn(field) == _drawn(field, upright_layer=True), name
         assert not field.document().defaultFont().italic(), name
+
+
+def test_a_failure_without_telltale_words_is_still_shown_as_a_problem(env):
+    env.press()
+    env.recorder.failed.emit("Beklenmeyen bir aksaklık.")
+    assert env.app.popup.status.text() == "Sorun"
+
+
+def test_every_state_has_one_color_used_everywhere():
+    from speak_to_print.ui import theme
+
+    assert set(theme.STATE_COLORS) == set(State)

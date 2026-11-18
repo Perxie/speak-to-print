@@ -12,11 +12,12 @@ sunucu gerekmez (Java'da H2 ya da SQLite JDBC kullanmak gibi).
 
 from __future__ import annotations
 
-import os
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+
+from .config import xdg_home
 
 MAX_ENTRIES = 30  # kullanıcı seçti (önceden 200); fazlası bir sonraki eklemede silinir
 
@@ -34,8 +35,7 @@ class Entry:
 
 
 def default_path() -> Path:
-    data_home = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
-    return data_home / "speak-to-print" / "history.db"
+    return xdg_home("XDG_DATA_HOME", ".local/share") / "speak-to-print" / "history.db"
 
 
 class History:

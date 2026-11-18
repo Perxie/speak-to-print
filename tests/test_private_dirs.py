@@ -2,6 +2,7 @@
 
 import os
 import stat
+from pathlib import Path
 
 from speak_to_print import app as app_module
 from speak_to_print.history import default_path as history_path
@@ -41,3 +42,22 @@ def test_personal_data_folders_are_the_ones_the_app_writes_to():
     assert app_module.log_file_path().parent in folders
     assert history_path().parent in folders
     assert any(folder.name == "speak-to-print" and folder.parent.name.endswith("config") for folder in folders)
+
+
+def test_xdg_folders_follow_the_environment_with_a_fallback(monkeypatch, tmp_path):
+    from speak_to_print.config import xdg_home
+
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    assert xdg_home("XDG_DATA_HOME", ".local/share") == tmp_path
+    monkeypatch.delenv("XDG_DATA_HOME")
+    assert xdg_home("XDG_DATA_HOME", ".local/share") == Path.home() / ".local" / "share"
+
+
+def test_uninstall_shows_where_the_history_really_is(monkeypatch, tmp_path, capsys):
+    # Kaldırma çıktısı ayar ve geçmiş klasörünü sabit ~/.config ve ~/.local/share yollarıyla yazıyordu.
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "veri"))
+    monkeypatch.setattr(app_module.desktop_entry, "uninstall", lambda: False)  # gerçek kayıtlar silinmesin
+    monkeypatch.setattr(app_module.kwin_rules, "remove_popup_rule", lambda: False)
+    monkeypatch.setattr(app_module.kwin_rules, "remove_editor_rule", lambda: False)
+    app_module._uninstall()
+    assert str(tmp_path / "veri" / "speak-to-print") in capsys.readouterr().out

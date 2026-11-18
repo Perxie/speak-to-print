@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
+
+def xdg_home(variable: str, fallback: str) -> Path:
+    """XDG klasörü: ortam değişkeni (ör. XDG_DATA_HOME) varsa o, yoksa ev klasöründeki varsayılan."""
+    return Path(os.environ.get(variable) or Path.home() / fallback)
+
+
 SAMPLE_RATE = 16_000  # Whisper 16 kHz mono ses bekler
 
 # Konuşma tanıma (gerekçe: docs/model-karsilastirma.md)

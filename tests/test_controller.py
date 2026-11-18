@@ -22,11 +22,15 @@ class Harness:
         self.method = "kwin-type"
         self.app_active = False
         self.controller = Controller(self.recorder, self.transcriber, self.write, self.settings, lambda: self.app_active)
-        self.states, self.outcomes, self.notices = [], [], []
+        self.states, self.outcomes, self.notices, self.problems = [], [], [], []
         self.controller.state_changed.connect(self.states.append)
         self.controller.outcome.connect(self.outcomes.append)
-        self.controller.notice.connect(self.notices.append)
+        self.controller.notice.connect(self._on_notice)
         self.controller.start()
+
+    def _on_notice(self, text, problem):
+        self.notices.append(text)
+        self.problems.append(problem)
 
     def write(self, text):
         if self.write_error:
@@ -291,3 +295,25 @@ def test_limit_signal_while_not_listening_is_ignored(h):
     h.ready()
     h.recorder.limit_reached.emit()
     assert h.controller.state is State.IDLE and h.recorder.calls == []
+
+
+def test_notices_say_themselves_whether_they_are_a_problem(h):
+    # Önceden küçük pencere bunu iletinin metnindeki kelimelerden tahmin ediyordu.
+    h.ready()
+    h.controller.toggle()
+    h.controller.cancel()
+    assert h.problems[-1] is False  # iptal: bilgi
+    h.controller.toggle()
+    h.recorder.failed.emit("Beklenmeyen bir aksaklık.")
+    assert h.problems[-1] is True  # mikrofon arızası: sorun
+    h.controller.toggle()
+    h.controller.toggle()
+    h.recorder.finished.emit(ONE_SECOND)
+    h.transcriber.failed.emit("bellek yetmedi")
+    assert h.problems[-1] is True  # çeviri hatası: sorun
+
+
+def test_listening_state_helpers():
+    assert [s for s in State if s.is_listening] == [State.LISTENING, State.PAUSED]
+    assert [s for s in State if s.can_toggle_listening] == [State.IDLE, State.LISTENING, State.PAUSED]
+    assert (State.LISTENING.listen_label, State.IDLE.listen_label) == ("Bitir", "Dinlemeyi başlat")

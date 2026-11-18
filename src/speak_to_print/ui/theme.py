@@ -11,6 +11,8 @@ from pathlib import Path
 from PySide6.QtGui import QColor, QFont, QFontDatabase, QPalette
 from PySide6.QtWidgets import QApplication, QPushButton, QWidget
 
+from ..controller import State
+
 # ------------------------------------------------------------ renkler
 INK = "#141B27"  # Mürekkep: pencere zemini
 LAYER = "#1D2635"  # Tabaka: bir kat yukarıdaki yüzeyler
@@ -21,6 +23,16 @@ MAGENTA = "#F2559B"  # canlı ses
 CYAN = "#3CC8E6"  # sonuç ve işlem
 YELLOW = "#FFD257"  # ana eylem
 RED = "#F2705A"  # sorun (baskıda macenta + sarının üst üste gelmesi)
+
+# Durumun rengi: ana penceredeki durum yazısı ve tepsi simgesi bunu kullanır.
+STATE_COLORS = {
+    State.LOADING: LEAD,
+    State.IDLE: PAPER,
+    State.LISTENING: MAGENTA,
+    State.PAUSED: LEAD,
+    State.TRANSCRIBING: CYAN,
+    State.FAILED: RED,
+}
 
 RADIUS = 12  # pencere köşeleri
 # Küçük pencereler yuvarlak köşeli ve saydam zeminli çizilir. Bir masaüstünde köşeler
