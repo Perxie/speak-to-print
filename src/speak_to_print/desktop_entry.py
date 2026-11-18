@@ -51,7 +51,7 @@ def _install_icon() -> None:
     os.utime(target.parent.parent.parent, None)
 
 
-def install(command: list[str], comment: str = "Yerel dikte uygulaması") -> Path:
+def install(command: list[str]) -> Path:
     """Menü kaydını yazar. `command`, uygulamayı başlatan komuttur (tam yollarla)."""
     _install_icon()
     path = desktop_file_path()
@@ -60,7 +60,7 @@ def install(command: list[str], comment: str = "Yerel dikte uygulaması") -> Pat
         "[Desktop Entry]\n"
         "Type=Application\n"
         f"Name={APP_NAME}\n"
-        f"Comment={comment}\n"
+        "Comment=Yerel dikte uygulaması\n"
         f"Exec={shlex.join(command)}\n"
         f"Icon={APP_ID}\n"
         "Terminal=false\n"

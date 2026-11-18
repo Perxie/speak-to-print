@@ -41,7 +41,6 @@ REQUEST_TIMEOUT_SECONDS = 300  # onay penceresi açıkken kullanıcıyı bekleri
 class Shortcut:
     id: str  # sinyallerde geri gelen ad, ör. "dictate"
     description: str  # KDE'nin kısayol ayarlarında görünen açıklama
-    preferred_trigger: str = ""  # öneri, ör. "LOGO+F9"; son kararı kullanıcı verir
 
 
 class PortalError(RuntimeError):
@@ -119,8 +118,7 @@ class PortalHotkeys(QObject):
 
             # 4. Kısayolları bildir. İlk seferde KDE onay penceresi açar.
             shortcuts = [
-                [s.id, {"description": Variant("s", s.description),
-                        **({"preferred_trigger": Variant("s", s.preferred_trigger)} if s.preferred_trigger else {})}]
+                [s.id, {"description": Variant("s", s.description)}]
                 for s in self._shortcuts
             ]
             results = await self._request(

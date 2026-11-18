@@ -71,10 +71,6 @@ class Recorder(QObject):
         self._devices.audioInputsChanged.connect(self._on_inputs_changed)
 
     @property
-    def is_recording(self) -> bool:
-        return self._source is not None
-
-    @property
     def seconds(self) -> float:
         """Şimdiye kadar kaydedilen (bekletilmemiş) sesin süresi."""
         return self._bytes / 2 / SAMPLE_RATE  # 16 bit = 2 bayt/örnek

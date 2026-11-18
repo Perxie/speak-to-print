@@ -25,10 +25,6 @@ def _executable() -> str | None:
     return str(fallback) if fallback.exists() else None
 
 
-def available() -> bool:
-    return _executable() is not None
-
-
 def type_text(text: str, timeout: float = 15.0) -> None:
     """Metni o an etkin olan pencereye yazar."""
     if not text:

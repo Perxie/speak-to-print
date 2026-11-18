@@ -11,10 +11,10 @@ yüklenmez, pano boşaltılır: yavaş bir uygulama en kötü ihtimalle boş yap
 Parola yöneticisi o içeriği zaten birkaç saniye içinde temizleyecekti.
 
 Her Unicode karakter doğru çıkar, çünkü karakterler tuş olarak değil pano
-üzerinden gider. Düzene bağlı tek şey yapıştırma tuşudur:
-  - "shift+insert": harf içermez, klavye düzeninden bağımsızdır.
-  - "ctrl+v": ABD/Türkçe Q düzeninde V'nin olduğu fiziksel tuşu kullanır;
-    Türkçe F'de o tuş `c` yazdığı için Ctrl+C'ye dönüşür.
+üzerinden gider. Düzene bağlı tek şey yapıştırma tuşudur; Shift+Insert
+kullanılır, çünkü harf içermez ve klavye düzeninden bağımsızdır. (Ctrl+V
+olmaz: ABD/Türkçe Q'da V'nin olduğu fiziksel tuş Türkçe F'de `c` yazar,
+Ctrl+V de Ctrl+C'ye dönüşür.)
 
 Sanal klavye /dev/uinput üzerinden oluşturulur (python-evdev). Oturum
 kullanıcısının buna yazma izni udev'deki `uaccess` kuralından gelir.
@@ -33,10 +33,7 @@ from . import OutputError
 
 log = logging.getLogger(__name__)
 
-PASTE_KEYS: dict[str, tuple[int, int]] = {
-    "shift+insert": (e.KEY_LEFTSHIFT, e.KEY_INSERT),
-    "ctrl+v": (e.KEY_LEFTCTRL, e.KEY_V),
-}
+PASTE_KEYS = (e.KEY_LEFTSHIFT, e.KEY_INSERT)  # sırayla basılır, ters sırayla bırakılır
 
 
 TEXT_TYPES = ("text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT")
@@ -92,14 +89,11 @@ def _restore(saved: dict[bool, tuple[str, bytes] | None]) -> None:
 class ClipboardPaster:
     """Sanal klavyeyi bir kez oluşturur ve her yapıştırmada yeniden kullanır."""
 
-    def __init__(self, keys: str = "shift+insert", restore_delay: float = 0.4) -> None:
-        if keys not in PASTE_KEYS:
-            raise ValueError(f"Bilinmeyen yapıştırma tuşu: {keys}")
-        self._keys = PASTE_KEYS[keys]
+    def __init__(self, restore_delay: float = 0.4) -> None:
+        self._keys = PASTE_KEYS
         self._restore_delay = restore_delay
         try:
-            self._device = UInput({e.EV_KEY: [code for pair in PASTE_KEYS.values() for code in pair]},
-                                  name="speak-to-print sanal klavye")
+            self._device = UInput({e.EV_KEY: list(PASTE_KEYS)}, name="speak-to-print sanal klavye")
         except OSError as error:
             raise OutputError(f"Sanal klavye oluşturulamadı (/dev/uinput): {error}") from error
         self._created_at = time.monotonic()

@@ -69,15 +69,15 @@ class Waveform(QWidget):
         self._timer.timeout.connect(self._tick)
 
     def set_mode(self, mode: str) -> None:
-        """"live": akar; "paused": olduğu yerde soluk durur; "processing": durur ve sonuç rengine döner;
-        "idle": yalnızca taban çizgisi."""
+        """"live": akar; "paused": olduğu yerde soluk durur; "processing": durur ve sonuç rengine döner.
+
+        Başlangıç durumu "idle"dır (henüz dinlenmedi: yalnızca taban çizgisi).
+        """
         self._mode = mode
         if mode == "live" and self.isVisible():
             self._timer.start()
         else:
             self._timer.stop()
-        if mode == "idle":
-            self._levels.clear()
         self.update()
 
     def clear(self) -> None:

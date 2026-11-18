@@ -16,7 +16,7 @@ class TextWriter:
 
     def _paste(self, text: str) -> None:
         if self._paster is None:
-            self._paster = clipboard_paste.ClipboardPaster("shift+insert")
+            self._paster = clipboard_paste.ClipboardPaster()
         self._paster.paste(text)
 
     def write(self, text: str) -> str:

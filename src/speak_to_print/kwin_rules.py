@@ -144,10 +144,6 @@ def _remove_rule(rule_id: str) -> bool:
 
 # ---------------------------------------------------------------- dinleme penceresi (odak almaz)
 
-def popup_rule_installed() -> bool:
-    return RULE_ID in _rule_ids()
-
-
 def install_popup_rule(app_id: str, title: str, x: int, y: int) -> Path | None:
     """Kuralı yazar ya da günceller. İlk seferde alınan yedeğin yolunu döndürür."""
     backup = _backup_once()
