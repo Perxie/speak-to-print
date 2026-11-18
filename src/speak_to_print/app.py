@@ -436,8 +436,6 @@ class Application(QObject):
 
     def _on_model_ready(self, seconds: float, device: str) -> None:
         log.info("Model yüklendi: %.1f sn (%s); açılıştan beri %.2f sn", seconds, device, _seconds_since_process_start())
-        if device != "cuda":
-            log.warning("Ekran kartı kullanılamadı, işlemciye geçildi: %s", self.transcriber.gpu_error)
         self.window.set_model_info(seconds, device)
 
     def _on_transcript(self, transcript: Transcript) -> None:

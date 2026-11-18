@@ -7,7 +7,7 @@ yere gönderilmez; internet yalnızca ilk kurulumda (paketler ve model) gerekir.
 ## Gerekenler
 
 - Arch tabanlı bir Linux (CachyOS'ta denendi), KDE Plasma 6.8 ya da yenisi, Wayland oturumu.
-- NVIDIA ekran kartı (RTX 4070'te denendi). Ekran kartı yoksa uygulama işlemciyle, daha yavaş çalışır.
+- NVIDIA ekran kartı (RTX 4070'te denendi). Uygulama yalnızca ekran kartıyla çalışır; ekran kartı kullanılamazsa "Model yüklenemedi" der.
 - Yaklaşık 6 GB boş disk: model 3 GB, Python ortamı 2 GB.
 
 ## Yeni bir bilgisayara kurulum

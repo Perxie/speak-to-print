@@ -44,7 +44,6 @@ class FakeTranscriber(QObject):
     def __init__(self):
         super().__init__()
         self.requests = []
-        self.gpu_error = ""
 
     def shutdown(self, timeout_ms=0):
         return True

@@ -206,11 +206,8 @@ class MainWindow(QWidget):
             self.detail.setText("Konuşun. Bitirmek için tuşu bırakın." if self._hold_mode
                                 else "Konuşun. Bitirmek için kısayola ya da Bitir'e basın.")
 
-    def set_model_info(self, seconds: float, device: str) -> None:
-        if device == "cuda":
-            self._model_info = f"Model {seconds:.1f} sn'de yüklendi (ekran kartı)."
-        else:
-            self._model_info = "Ekran kartı kullanılamadı; model işlemcide çalışıyor, çeviri daha yavaş olacak."
+    def set_model_info(self, seconds: float, _device: str) -> None:
+        self._model_info = f"Model {seconds:.1f} sn'de yüklendi (ekran kartı)."
         self._show_hint()
 
     def show_loading_status(self, text: str) -> None:

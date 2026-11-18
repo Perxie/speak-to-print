@@ -32,7 +32,7 @@ class Transcript:
 
 
 class _Worker(QObject):
-    ready = Signal(float, str)  # yükleme süresi, aygıt ("cuda" ya da "cpu")
+    ready = Signal(float, str)  # yükleme süresi, aygıt (her zaman "cuda": işlemci yedeği yok)
     load_failed = Signal(str)
     done = Signal(object)  # Transcript
     failed = Signal(str)
@@ -41,7 +41,6 @@ class _Worker(QObject):
     def __init__(self) -> None:
         super().__init__()
         self._model = None
-        self.gpu_error = ""  # ekran kartı kullanılamadıysa nedeni
 
     def _model_path(self) -> str:
         """Modelin diskteki yolu. Bilgisayarda yoksa bir kez indirir; indiremezse anlaşılır bir hata verir."""
@@ -68,19 +67,16 @@ class _Worker(QObject):
             path = self._model_path()
             try:
                 self._model = WhisperModel(path, device="cuda", compute_type=COMPUTE_TYPE)
-                device = "cuda"
             except Exception as gpu_error:  # noqa: BLE001 — ekran kartı yok ya da kullanılamıyor
-                self.status.emit("Ekran kartı kullanılamadı; model işlemciye yükleniyor…")
-                self.gpu_error = f"{type(gpu_error).__name__}: {gpu_error}"
-                # İşlemcide 8 bitlik hesap: daha yavaş ama ekran kartı olmadan da çalışır.
-                self._model = WhisperModel(path, device="cpu", compute_type="int8")
-                device = "cpu"
-            self.ready.emit(time.perf_counter() - start, device)
+                # Kullanıcı kararı: yalnızca ekran kartı; işlemciye yüklenmez (orada çeviri ~10 kat yavaş).
+                raise RuntimeError(f"Ekran kartı kullanılamadı ({type(gpu_error).__name__}: {gpu_error}). "
+                                   "Speak to Print yalnızca NVIDIA ekran kartıyla çalışır; sürücünün kurulu "
+                                   "olduğunu kontrol edip uygulamayı yeniden açın.") from gpu_error
+            self.ready.emit(time.perf_counter() - start, "cuda")
         except Exception as error:  # noqa: BLE001 — hatayı arayüze taşıyoruz
             self.load_failed.emit(str(error) if isinstance(error, RuntimeError) else f"{type(error).__name__}: {error}")
             return
-        if device == "cuda":
-            self._warm_up()
+        self._warm_up()
 
     def _warm_up(self) -> None:
         """Sonucu atılan kısa bir çeviri: ilk diktenin ekran kartı hazırlığını beklememesi için.
@@ -88,7 +84,7 @@ class _Worker(QObject):
         Ekran kartındaki ilk çeviri, CUDA ve cuBLAS'ın hazırlığı ile sessizlik ayıklayıcının (VAD)
         yüklenmesi yüzünden ~0,15–0,3 sn daha uzun sürüyor. Bu bedeli "hazır"dan hemen sonra bu
         çeviri öder; o sırada gelen bir dikte kuyrukta bekler. Çıktı hiçbir yere gitmez (sessizlikten
-        uydurulan metin ne yazılır ne günlüğe girer). İşlemcide yapılmaz: orada saniyeler sürer.
+        uydurulan metin ne yazılır ne günlüğe girer).
         """
         try:
             start = time.perf_counter()
@@ -160,10 +156,6 @@ class Transcriber(QObject):
         self.ready.connect(lambda seconds, device: self._remember("ready", seconds, device))
         self.load_failed.connect(lambda message: self._remember("load_failed", message))
         self._thread.start()
-
-    @property
-    def gpu_error(self) -> str:
-        return self._worker.gpu_error
 
     def load(self) -> None:
         """Modeli yükler. Kaç kez çağrılırsa çağrılsın model bir kez yüklenir.

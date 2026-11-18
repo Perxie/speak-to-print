@@ -125,11 +125,13 @@ def test_warm_up_output_goes_nowhere(monkeypatch, caplog):
     assert "Altyazı" not in caplog.text
 
 
-def test_no_warm_up_when_the_model_falls_back_to_the_cpu(monkeypatch):
+def test_without_a_usable_gpu_the_model_is_not_loaded_at_all(monkeypatch):
+    # Kullanıcı kararı (18 Kasım): yalnızca ekran kartı; işlemci yedeği yok.
     world = LoadingWorld(monkeypatch, gpu_works=False)
     world.worker.load()
-    assert ("hazır", "cpu") in world.events
-    assert not [e for e in world.events if e[0] in ("çeviri", "vad")]
+    failures = [message for name, *rest in world.events if name == "yükleme hatası" for message in rest]
+    assert failures and "Ekran kartı" in failures[0]
+    assert not [e for e in world.events if e[0] in ("hazır", "yüklendi", "çeviri", "vad")]
 
 
 def test_failed_warm_up_leaves_the_model_usable(monkeypatch):
