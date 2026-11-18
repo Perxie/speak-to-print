@@ -67,13 +67,14 @@ Kişisel kullanım için, KDE Plasma 6 (Wayland) üzerinde tamamen yerel çalı�
 
 ## Sürümler
 - `v1.0.0` (17 Kasım 2026): bütün fazları (0–5) tamamlanmış, kullanıcının onayladığı kararlı sürüm. Bir şey bozulursa dönülecek nokta bu etiket.
-- `v1.1.0` (18 Kasım 2026): v1.0.0 + güvenlik düzeltmeleri (pano, geçmiş dosyası, tek kopya soketi, etiketler, model çıktısı tek satır, sürüm sabitleme, kayıt süresi sınırı, ses klasörü, KWin araçlarına zaman aşımı, klasör izinleri). Optimizasyonda bir şey bozulursa dönülecek nokta bu etiket.
-- Bir dosyayı bir sürümdeki hâline döndürmek: `git checkout v1.1.0 -- <dosya>`. O sürümden sonraki bütün değişiklikleri görmek: `git diff v1.1.0`.
+- `v1.1.0` (18 Kasım 2026): v1.0.0 + güvenlik düzeltmeleri (pano, geçmiş dosyası, tek kopya soketi, etiketler, model çıktısı tek satır, sürüm sabitleme, kayıt süresi sınırı, ses klasörü, KWin araçlarına zaman aşımı, klasör izinleri).
+- `v1.2.0` (18 Kasım 2026): v1.1.0 + optimizasyon (model ısıtma ve erken yükleme, ayarlar penceresinin gereksiz işleri, küçük iyileştirmeler), düzeltmeler (geçmiş listesi sınırı, uydurulan metnin günlük gizliliği, ayarlarda tekerlek koruması), temizlik, italik yer tutucular, geçmiş 30 kayıt, yalnızca ekran kartı. Bir şey bozulursa dönülecek nokta bu etiket.
+- Bir dosyayı bir sürümdeki hâline döndürmek: `git checkout v1.2.0 -- <dosya>`. O sürümden sonraki bütün değişiklikleri görmek: `git diff v1.2.0`.
 - Kurulumda inen üç şey denenmiş sürüme sabit; kendiliğinden güncellenmez, bilerek değiştirilir:
   - Model: `config.MODEL_REVISION` (Hugging Face `Systran/faster-whisper-large-v3` commit'i). Yenisine geçmek için modeli o commit'le indirip dene, sonra kimliği değiştir.
   - kwin-type: README'deki `git checkout <commit>` satırı (şu an v0.2, `0bc344b`). Yenisi için `git -C ~/.local/src/kwin-type fetch`, değişikliklere bak, derleyip dene, sonra README'yi güncelle.
   - Python paketleri: `uv.lock`. README'de `uv sync --locked` (kilit `pyproject.toml` ile uyuşmazsa hata verir). Geliştirirken `uv add`/`uv lock` kilidi günceller.
-- Projenin tamamını bir sürüme döndürmek (`git reset --hard v1.1.0`) sonraki commit'leri siler; yalnızca kullanıcı açıkça isterse yap. Geri dönüşte `uv sync` çalıştır.
+- Projenin tamamını bir sürüme döndürmek (`git reset --hard v1.2.0`) sonraki commit'leri siler; yalnızca kullanıcı açıkça isterse yap. Geri dönüşte `uv sync` çalıştır.
 
 ## Çalışma kuralları
 - Her aşamanın sonunda kullanıcıya test tarifi ver. Kullanıcı deneyip onaylayınca commit et, `git push` ile GitHub'a gönder (herkese açık repo `Perxie/speak-to-print`, remote `origin`; kullanıcı bilerek açtı) ve bir sonraki aşamaya geçmeden onay bekle.

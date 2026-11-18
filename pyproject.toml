@@ -1,6 +1,6 @@
 [project]
 name = "speak-to-print"
-version = "1.1.0"
+version = "1.2.0"
 description = "KDE Plasma (Wayland) için tamamen yerel çalışan Türkçe dikte uygulaması"
 requires-python = ">=3.14"
 dependencies = [
