@@ -5,7 +5,7 @@
 ## Şu an
 - Son yapılan: Güvenlik düzeltmelerinin hepsi bitti ve kullanıcı denedi (1–8, 9a, 9c; 9b'yi kullanıcı istemedi): pano yöntemi, geçmiş dosyası (`secure_delete`), tek kopya soketi oturum klasöründe, etiketler düz metin, model çıktısı tek satır, sürümler sabit, kayıt 10 dk sınırı, ses dosyaları özel klasörde, KWin araçlarına zaman aşımı, kişisel veri klasörleri 0700. Öncesinde v1.0.0 etiketlendi. Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
 - Yarım kalan: Optimizasyon, 4. adım (uygulamayı iyileştirme). Skill iyileştirildi ve kuruldu (3. adım bitti). Liste ve sıra: `calisma/optimizasyon/DEVAM.md` (git dışı). Raporlar git dışı: `OPTIMIZATIONS.md`, `OPTIMIZATIONS_claude.md`.
-- Sıradaki: İyileştirme 6 (ölü kod, numpy) bitti, kullanıcı denedi (pano yöntemi dahil). İtalik yazı tipi kararı bekleniyor (kullanıcı yer tutucuların yerini sordu; 3 yer: düzenleyici boşken, ana pencere önizleme boşken, Ayarlar sözlük boşken). Sonra iyileştirme 7 (tekrarlar). Liste: `calisma/optimizasyon/DEVAM.md`. Dönülecek nokta `v1.1.0`.
+- Sıradaki: İtalik yer tutucular bitti, kullanıcı denedi. Kullanıcının onayıyla iyileştirme 7 (tekrarlar: durum gösterimi, KWin kural işlevleri, XDG yolları ve `--uninstall` çıktısı, iletinin "sorun" olduğunun kelimeyle tahmini, sözlüğün iki yerde ayrıştırılması). Liste: `calisma/optimizasyon/DEVAM.md`. Dönülecek nokta `v1.1.0`.
 
 ## Yapılacaklar
 - [x] Faz 0 — Riskli parçaların denemeleri (GPU, mikrofon, model seçimi, kısayol, yazma yöntemi, odak almayan pencere).

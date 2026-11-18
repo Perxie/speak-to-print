@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections import deque
 
-from PySide6.QtCore import QRectF, QSize, Qt, QTimer
-from PySide6.QtGui import QFontMetrics, QPainter, QPainterPath, QPen, QTextBlockFormat, QTextCursor
+from PySide6.QtCore import QEvent, QRectF, QSize, Qt, QTimer
+from PySide6.QtGui import QFont, QFontMetrics, QPainter, QPainterPath, QPen, QTextBlockFormat, QTextCursor
 from PySide6.QtWidgets import QAbstractButton, QSizePolicy, QStyle, QStyledItemDelegate, QTextEdit, QWidget
 
 from . import theme
@@ -26,7 +26,32 @@ class PrintedText(QTextEdit):
         self.setReadOnly(read_only)
         self.setFrameShape(QTextEdit.Shape.NoFrame)
         self.setFont(theme.text_font(17))
+        # Temanın stil sayfası, alan gösterilirken iç katmanın yazı tipini sıfırlıyor; her
+        # sıfırlamada yer tutucunun italiği yeniden verilir.
+        self.viewport().installEventFilter(self)
+        self._match_placeholder_font()
         self._apply_leading()
+
+    def changeEvent(self, event) -> None:  # noqa: N802 — Qt'nin yöntem adı
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.FontChange:
+            self._match_placeholder_font()
+
+    def eventFilter(self, watched, event) -> bool:  # noqa: N802 — Qt'nin yöntem adı
+        if (watched is self.viewport() and event.type() == QEvent.Type.FontChange
+                and not watched.font().italic()):
+            self._match_placeholder_font()
+        return super().eventFilter(watched, event)
+
+    def _match_placeholder_font(self) -> None:
+        """Yer tutucu (alan boşken görünen soluk yazı) italik çizilsin (docs/tasarim.md).
+
+        Qt yer tutucuyu iç katmanın (viewport) yazı tipiyle çizer; yazılan metin ise belgenin
+        yazı tipiyle çizildiği için düz kalır.
+        """
+        font = QFont(self.font())
+        font.setItalic(True)
+        self.viewport().setFont(font)
 
     def setPlainText(self, text: str) -> None:  # noqa: N802 — Qt'nin yöntem adı
         super().setPlainText(text)

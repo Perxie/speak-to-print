@@ -11,4 +11,10 @@ def qt_app():
     # Arayüz testleri pencere bileşenleri oluşturduğu için QApplication gerekir.
     from PySide6.QtWidgets import QApplication
 
-    return QApplication.instance() or QApplication([])
+    from speak_to_print.ui import theme
+
+    app = QApplication.instance() or QApplication([])
+    # Gerçek uygulama gibi temayla: stil sayfası bazı bileşenlerin yazı tipini gösterilirken
+    # değiştiriyor (ör. yer tutucunun italiği); temasız testler bunu göremez.
+    theme.apply(app)
+    return app

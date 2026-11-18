@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 from PySide6.QtCore import QEvent, QPoint, QPointF, QSettings, Qt
 from PySide6 import QtGui
-from PySide6.QtGui import QMouseEvent, QTextDocument, QWheelEvent
+from PySide6.QtGui import QFont, QMouseEvent, QTextDocument, QWheelEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
@@ -409,3 +409,46 @@ def test_wheel_still_works_on_a_box_the_user_selected(env):
     before = env.settings.microphone_id
     _wheel(dialog.microphone)
     assert env.settings.microphone_id != before
+
+
+def _placeholder_fields(app):
+    return {"düzenleyici": app.editor.text, "ana pencere önizleme": app.window.preview,
+            "ayarlar sözlük": app.settings_dialog.vocabulary}
+
+
+def _drawn(field, upright_layer=False):
+    """Alanın çizimi; `upright_layer`: kıyas için iç katman (yer tutucunun çizildiği yer) düz yazı tipiyle.
+
+    PrintedText iç katmanın italiğini kaybedince geri verir; kıyas çizimi için bu kısa süre kapatılır.
+    """
+    layer = field.viewport()
+    saved = layer.font()
+    if upright_layer:
+        layer.removeEventFilter(field)
+        font = QFont(saved)
+        font.setItalic(False)
+        layer.setFont(font)
+    QApplication.processEvents()
+    image = field.grab().toImage()
+    layer.setFont(saved)
+    if upright_layer:
+        layer.installEventFilter(field)
+    return image
+
+
+def test_placeholders_are_drawn_in_italic(env):
+    # docs/tasarim.md: "Yer tutucular italik." Alan ekranda gösterilirken temanın stil sayfası
+    # iç katmanın yazı tipini sıfırlıyor; italik bundan sonra da kalmalı.
+    for name, field in _placeholder_fields(env.app).items():
+        field.resize(400, 120)
+        field.show()
+        field.setPlainText("")
+        assert _drawn(field) != _drawn(field, upright_layer=True), name
+
+
+def test_typed_text_stays_upright(env):
+    for name, field in _placeholder_fields(env.app).items():
+        field.resize(400, 120)
+        field.setPlainText("Yazılan metin düz kalır.")
+        assert _drawn(field) == _drawn(field, upright_layer=True), name
+        assert not field.document().defaultFont().italic(), name
