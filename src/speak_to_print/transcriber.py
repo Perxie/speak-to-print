@@ -9,6 +9,7 @@ sonucu SwingUtilities.invokeLater ile arayüze taşımak.
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass
 
@@ -18,6 +19,8 @@ from PySide6.QtCore import QObject, QThread, Signal, Slot
 from . import textguard
 from .config import COMPUTE_TYPE, LANGUAGE, MODEL_NAME, MODEL_REVISION, SAMPLE_RATE, build_prompt
 from .cuda_libs import preload_cuda_libraries
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -75,6 +78,32 @@ class _Worker(QObject):
             self.ready.emit(time.perf_counter() - start, device)
         except Exception as error:  # noqa: BLE001 — hatayı arayüze taşıyoruz
             self.load_failed.emit(str(error) if isinstance(error, RuntimeError) else f"{type(error).__name__}: {error}")
+            return
+        if device == "cuda":
+            self._warm_up()
+
+    def _warm_up(self) -> None:
+        """Sonucu atılan kısa bir çeviri: ilk diktenin ekran kartı hazırlığını beklememesi için.
+
+        Ekran kartındaki ilk çeviri, CUDA ve cuBLAS'ın hazırlığı ile sessizlik ayıklayıcının (VAD)
+        yüklenmesi yüzünden ~0,15–0,3 sn daha uzun sürüyor. Bu bedeli "hazır"dan hemen sonra bu
+        çeviri öder; o sırada gelen bir dikte kuyrukta bekler. Çıktı hiçbir yere gitmez (sessizlikten
+        uydurulan metin ne yazılır ne günlüğe girer). İşlemcide yapılmaz: orada saniyeler sürer.
+        """
+        try:
+            start = time.perf_counter()
+            from faster_whisper.vad import get_vad_model
+
+            get_vad_model()  # bir kez yüklenir, sonra önbellekten gelir
+            segments, _info = self._model.transcribe(
+                np.zeros(SAMPLE_RATE, dtype=np.float32), language=LANGUAGE, beam_size=5, vad_filter=False,
+                initial_prompt=build_prompt(True, []), temperature=0.0,
+            )
+            for _segment in segments:  # üreteç tüketilince çeviri yapılır; sonuç atılır
+                pass
+            log.info("Model ısıtıldı (%.0f ms).", (time.perf_counter() - start) * 1000)
+        except Exception as error:  # noqa: BLE001 — ısınma olmazsa model yine çalışır
+            log.warning("Model ısıtılamadı: %s", type(error).__name__)
 
     @Slot(object, bool, list)
     def transcribe(self, samples: np.ndarray, use_prompt: bool, vocabulary: list) -> None:

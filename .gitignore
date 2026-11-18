@@ -27,3 +27,6 @@ dist/
 /*.jpg
 SECURITY_AUDIT.md
 SECURITY_AUDIT_claude.md
+OPTIMIZATIONS.md
+OPTIMIZATIONS_claude.md
+calisma/
