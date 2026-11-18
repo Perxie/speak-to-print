@@ -464,3 +464,36 @@ def test_every_state_has_one_color_used_everywhere():
     from speak_to_print.ui import theme
 
     assert set(theme.STATE_COLORS) == set(State)
+
+
+def test_editor_paste_starts_as_soon_as_focus_leaves_the_app(env):
+    # Önceden odağın dönüşü 40 ms'de bir yoklanıyordu; Qt'nin haberi gelince hemen başlamalı.
+    env.dictate("İlk hâli.")
+    env.app.editor.open_with("Düzeltilmiş.")
+    env.focus = True
+    env.app.editor.paste_button.click()
+    env.focus = False
+    QApplication.instance().applicationStateChanged.emit(Qt.ApplicationState.ApplicationInactive)
+    assert env.app._pending_paste == ""  # yoklama beklenmeden ele alındı (yazma 120 ms sonra)
+    _run_event_loop_for(0.3)
+    assert env.written[-1] == "Düzeltilmiş. "
+
+
+def test_editor_paste_gives_up_if_focus_never_leaves(env):
+    env.dictate("İlk hâli.")
+    env.app.editor.open_with("Düzeltilmiş.")
+    env.focus = True
+    env.app.editor.paste_button.click()
+    _run_event_loop_for(1.8)
+    assert env.app.editor.isVisible() and env.written == ["İlk hâli. "]
+
+
+def test_popup_does_not_restyle_its_status_when_nothing_changed(env, monkeypatch):
+    env.press()  # dinliyor
+    popup = env.app.popup
+    popup._refresh_status()
+    restyles = []
+    monkeypatch.setattr(popup.status, "setStyleSheet", lambda style: restyles.append(style))
+    for _ in range(3):
+        popup._refresh_status()  # saat her 200 ms'de böyle çağırıyor
+    assert restyles == []

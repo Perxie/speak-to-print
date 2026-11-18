@@ -145,6 +145,7 @@ class ListeningPopup(Card):
         self.close_button.clicked.connect(self.hide)
         self.auto_paste.toggled.connect(self.auto_paste_toggled)
 
+        self._shown_status: tuple[str, str, bool] | None = None
         self._clock = QTimer(self)  # dinlerken süreyi güncel tutar
         self._clock.setInterval(200)
         self._clock.timeout.connect(self._refresh_status)
@@ -262,6 +263,10 @@ class ListeningPopup(Card):
         theme.set_kind(self.listen_button, "primary")
 
     def _set_status(self, text: str, color: str, hollow: bool = False) -> None:
+        # Saat bunu dinlerken saniyede beş kez çağırıyor; durum değişmediyse stil yeniden hesaplanmasın.
+        if (text, color, hollow) == self._shown_status:
+            return
+        self._shown_status = (text, color, hollow)
         self.status.setText(text)
         self.status.setStyleSheet(f"color: {color};")
         fill = "transparent" if hollow else color

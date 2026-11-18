@@ -215,9 +215,15 @@ class Application(QObject):
         )
         self._pending_paste = ""
         self._focus_wait_started = 0.0
-        self._focus_timer = QTimer(self)  # düzenleyiciden yapıştırırken odağın geri dönmesini bekler
-        self._focus_timer.setInterval(40)
-        self._focus_timer.timeout.connect(self._paste_when_focus_released)
+        # Düzenleyiciden yapıştırırken odağın önceki uygulamaya dönmesi beklenir: Qt bunu haber verir
+        # (applicationStateChanged). Haber 1,5 sn içinde gelmezse zaman aşımıyla vazgeçilir.
+        self._focus_timer = QTimer(self)
+        self._focus_timer.setSingleShot(True)
+        self._focus_timer.setInterval(1500)
+        self._focus_timer.timeout.connect(lambda: self._paste_when_focus_released(timed_out=True))
+        app_instance = QGuiApplication.instance()
+        if app_instance is not None:
+            app_instance.applicationStateChanged.connect(self._on_application_state_changed)
         self.window = MainWindow()
         self.settings_dialog = SettingsDialog(self.settings)
         self.sounds = Sounds(lambda: self.settings.sounds, lambda: self.settings.sound_volume, self)
@@ -364,10 +370,16 @@ class Application(QObject):
         self.editor.hide()
         self._focus_timer.start()
 
-    def _paste_when_focus_released(self) -> None:
+    def _on_application_state_changed(self, _state) -> None:
+        if self._pending_paste:
+            self._paste_when_focus_released()
+
+    def _paste_when_focus_released(self, timed_out: bool = False) -> None:
+        if not self._pending_paste:
+            return
         waited = time.monotonic() - self._focus_wait_started
         released = not self._app_has_focus()
-        if not released and waited < 1.5:
+        if not released and not timed_out:
             return
         self._focus_timer.stop()
         text, self._pending_paste = self._pending_paste, ""

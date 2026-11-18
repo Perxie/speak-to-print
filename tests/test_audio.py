@@ -69,3 +69,22 @@ def test_limit_is_reported_once_when_reached(recorder):
     feed(recorder, 0.6)
     feed(recorder, 0.6)
     assert hits == [1.2]
+
+
+class FakeSource:
+    def stop(self):
+        pass
+
+    def deleteLater(self):
+        pass
+
+
+def test_finished_recording_is_converted_to_floats_between_minus_one_and_one(recorder):
+    import numpy as np
+
+    recorder._source = FakeSource()  # kayıt sürüyormuş gibi
+    recorder._io.pending = np.array([-32768, -16384, 0, 16384], dtype=np.int16).tobytes()
+    results = []
+    recorder.finished.connect(results.append)
+    recorder._finish()
+    assert results[0].dtype == np.float32 and results[0].tolist() == [-1.0, -0.5, 0.0, 0.5]

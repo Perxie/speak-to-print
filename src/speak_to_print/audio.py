@@ -152,7 +152,11 @@ class Recorder(QObject):
         if self._source is None:
             return
         self._read()
-        samples = np.frombuffer(b"".join(self._chunks), dtype=np.int16).astype(np.float32) / 32768.0
+        data = b"".join(self._chunks)
+        self._chunks = []  # parçaların belleği hemen bırakılsın
+        samples = np.frombuffer(data, dtype=np.int16).astype(np.float32)
+        samples *= 1 / 32768.0  # yerinde bölme: ikinci bir dizi oluşmasın (10 dk'lık kayıtta 38 MB)
+        del data
         self._cleanup()
         self.finished.emit(samples)
 
