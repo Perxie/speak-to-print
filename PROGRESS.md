@@ -3,7 +3,7 @@
 <!-- Bu dosya kısa kalır: "Şu an" bölümünün üstüne yazılır, biten maddeler birikince tek satırlık özete indirilir. -->
 
 ## Şu an
-- Son yapılan: Optimizasyon turu bitti ve `v1.2.0` olarak etiketlendi (GitHub sürüm sayfası açıldı). Kullanıcının `mia-optimization-check` skill'i iyileştirildi ve kuruldu. Ayrıntı ve kararlar: `calisma/optimizasyon/DEVAM.md` (git dışı). Kullanıcı kararları: pano yolundaki donma düzeltilmeyecek (güvenlik kodunu bozmasın), işlemci yedeği kaldırıldı (yalnızca ekran kartı), geçmiş 30 kayıt, yer tutucular italik, "dikteden önceki pencereyi hatırlama" istenmedi. Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
+- Son yapılan: Optimizasyon turu bitti ve `v1.2.0` olarak etiketlendi (GitHub sürüm sayfası açıldı). Kullanıcının `mia-optimization-check` skill'i iyileştirildi ve kuruldu. Çalışma notları, raporlar ve ekran görüntüleri iş bitince silindi (kullanıcı isteği, 18 Kasım). Kullanıcı kararları: pano yolundaki donma düzeltilmeyecek (güvenlik kodunu bozmasın), işlemci yedeği kaldırıldı (yalnızca ekran kartı), geçmiş 30 kayıt, yer tutucular italik, "dikteden önceki pencereyi hatırlama" istenmedi. Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
 - Yarım kalan: Yok.
 - Sıradaki: Kullanıcı ne isterse. Dönülecek nokta `v1.2.0`.
 
