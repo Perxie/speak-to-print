@@ -5,7 +5,7 @@
 ## Şu an
 - Son yapılan: Optimizasyon turu bitti ve `v1.2.0` olarak etiketlendi (GitHub sürüm sayfası açıldı). Kullanıcının `mia-optimization-check` skill'i iyileştirildi ve kuruldu. Çalışma notları, raporlar ve ekran görüntüleri iş bitince silindi (kullanıcı isteği, 18 Kasım). Kullanıcı kararları: pano yolundaki donma düzeltilmeyecek (güvenlik kodunu bozmasın), işlemci yedeği kaldırıldı (yalnızca ekran kartı), geçmiş 30 kayıt, yer tutucular italik, "dikteden önceki pencereyi hatırlama" istenmedi. Kullanıcı tasarım için önerdiğim iyileştirmeleri (eski kalan açıklama satırı, sessizlikte noktalı ses çizgisi, ses çizgisi → metin geçişi, boş önizleme alanı, geçmişte gün başlıkları) istemedi: "böyle kalsın". Bunları yeniden önerme.
 - Yarım kalan: Yok.
-- Sıradaki: Kullanıcı ne isterse. Dönülecek nokta `v1.2.0`.
+- Sıradaki: Yok. Kullanıcı geliştirmeyi noktaladı (18 Kasım 2026, `v1.2.0`); ileride özellik ekleyip çıkarabilir. Yeni bir bilgisayara kurulum README'den yapılır (GitHub'dan temiz kopya 18 Kasım'da denendi: kilitli ortam kuruldu, 167 test geçti; kwin-type v0.2 ve model sürümü kaynaklarında duruyor). Kullanıcı ayarların, geçmişin, `recordings/` ve skill'lerin ayrıca yedeklenmesini istemedi (kolayca yeniden ayarlanır). Dönülecek nokta `v1.2.0`.
 
 ## Yapılacaklar
 - [x] Faz 0 — Riskli parçaların denemeleri (GPU, mikrofon, model seçimi, kısayol, yazma yöntemi, odak almayan pencere).
