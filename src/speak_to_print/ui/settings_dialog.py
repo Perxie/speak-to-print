@@ -5,7 +5,7 @@ Dört bölüm: kısayol, ses, metin ve sözlük. Görsel dil için bkz. docs/tas
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, Qt, QTimer, Signal
 from PySide6.QtMultimedia import QMediaDevices
 from PySide6.QtWidgets import (QComboBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QRadioButton, QSlider,
                                QVBoxLayout, QWidget)
@@ -97,6 +97,11 @@ class SettingsDialog(QWidget):
             widget.setFont(theme.ui_font(13, 500))
         for combo in (self.microphone, self.output_method):
             combo.setMinimumHeight(34)  # pencere daralınca açılır kutular ezilmesin
+        # Fare tekerleği yalnızca kullanıcının tıklayıp seçtiği kutuyu ya da sürgüyü değiştirsin:
+        # pencerede gezinirken tekerlek ayarları sessizce değiştiriyordu (18 Kasım: mikrofon böyle değişti).
+        for widget in (self.microphone, self.output_method, self.sound_volume):
+            widget.setFocusPolicy(Qt.FocusPolicy.StrongFocus)  # tekerlek odak da vermesin
+            widget.installEventFilter(self)
 
         shortcut_row = QHBoxLayout()
         shortcut_row.setSpacing(8)
@@ -211,6 +216,12 @@ class SettingsDialog(QWidget):
     def _save(self) -> None:
         self._settings.vocabulary = self._vocabulary_terms()
         self._settings.sound_volume = self.sound_volume.value()
+
+    def eventFilter(self, watched, event) -> bool:  # noqa: N802 — Qt'nin yöntem adı
+        if event.type() == QEvent.Type.Wheel and isinstance(watched, (QComboBox, QSlider)) and not watched.hasFocus():
+            event.ignore()
+            return True  # odakta olmayan kutuya tekerlek ulaşmasın
+        return super().eventFilter(watched, event)
 
     def hideEvent(self, event) -> None:  # noqa: N802 — Qt'nin yöntem adı
         self.flush()

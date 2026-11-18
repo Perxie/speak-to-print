@@ -8,9 +8,10 @@ import time
 
 import numpy as np
 import pytest
-from PySide6.QtCore import QEvent, QPointF, QSettings, Qt
+from PySide6.QtCore import QEvent, QPoint, QPointF, QSettings, Qt
 from PySide6 import QtGui
-from PySide6.QtGui import QMouseEvent, QTextDocument
+from PySide6.QtGui import QMouseEvent, QTextDocument, QWheelEvent
+from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
 from fakes import FakeRecorder, FakeTranscriber
@@ -366,3 +367,45 @@ def test_saving_with_nothing_pending_does_not_overwrite_settings_with_stale_valu
     env.settings.vocabulary = ["başka yerden"]
     env.app.settings_dialog.flush()
     assert env.settings.vocabulary == ["başka yerden"]
+
+
+def _wheel(widget):
+    """Bileşenin üstünde bir tık aşağı fare tekerleği."""
+    event = QWheelEvent(QPointF(5, 5), QPointF(widget.mapToGlobal(QPoint(5, 5))), QPoint(), QPoint(0, -120),
+                        Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier, Qt.ScrollPhase.NoScrollPhase, False)
+    QApplication.sendEvent(widget, event)
+
+
+def _settings_with_two_microphones(env):
+    dialog = env.app.settings_dialog
+    dialog.open()
+    dialog.microphone.addItem("İkinci mikrofon", "ikinci-mikrofon")
+    return dialog
+
+
+def test_wheel_over_a_box_in_settings_does_not_change_the_setting(env):
+    # Pencerede gezinirken tekerlek ayarları sessizce değiştiriyordu (18 Kasım: mikrofon böyle değişti).
+    dialog = _settings_with_two_microphones(env)
+    microphone, method = env.settings.microphone_id, env.settings.output_method
+    _wheel(dialog.microphone)
+    _wheel(dialog.output_method)
+    assert (env.settings.microphone_id, env.settings.output_method) == (microphone, method)
+
+
+def test_wheel_over_the_volume_slider_does_not_move_it(env):
+    dialog = env.app.settings_dialog
+    dialog.open()
+    before = dialog.sound_volume.value()
+    _wheel(dialog.sound_volume)
+    assert dialog.sound_volume.value() == before
+
+
+def test_wheel_still_works_on_a_box_the_user_selected(env):
+    dialog = _settings_with_two_microphones(env)
+    dialog.activateWindow()
+    QTest.qWaitForWindowActive(dialog, 1000)
+    dialog.microphone.setFocus()
+    assert dialog.microphone.hasFocus()
+    before = env.settings.microphone_id
+    _wheel(dialog.microphone)
+    assert env.settings.microphone_id != before
